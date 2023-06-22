@@ -113,4 +113,14 @@ const auth = async (req, res, next) => {
     }
 }
 
-export default {signup,Login,auth}
+const getUserData = async (req, res, next) => {
+    try{
+        const response = await userSchema.findOne({_id:req.body.id})
+        console.log(response);
+        res.json(response)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default {signup,Login,auth,getUserData}

@@ -36,6 +36,10 @@ const user = new mongoose.Schema({
         country:{
             type:String,
             required:true
+        },
+        is_verified:{
+            type:Boolean,
+            default:false
         }
     }
 })
