@@ -1,6 +1,7 @@
 import { userSchema } from "../Model/userModel.js"; 
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import { uploadCloud } from "../Middleware/Cloudinary.js";
 
 const signup = async (req, res, next) => {
     try{
@@ -123,4 +124,40 @@ const getUserData = async (req, res, next) => {
     }
 }
 
-export default {signup,Login,auth,getUserData}
+const updatePic = async (req, res, next) => {
+    try{
+        const {user_id} = req.body
+        const imgUrl=req.file.filename
+        const dp = await uploadCloud(imgUrl,1)
+        console.log(dp);
+        await userSchema.updateOne({_id:user_id},{$set:{"profile.image":dp}})
+        res.json({status:true,dp:dp})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const updateAudio = async (req, res, next) => {
+    try{
+        const {user_id} = req.body
+        const audioUrl=req.file.filename
+        const audio = await uploadCloud(audioUrl,2)
+        await userSchema.updateOne({_id:user_id},{$set:{"profile.audio":audio+".mp3"}})
+        res.json({status:true,audio:audio+".mp3"})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const updateProfile = async (req, res, next) => {
+    try{
+        const body = req.body
+        if(body?.hoursPerWeek){
+            await userSchema.updateOne({_id:body.id},{$set:{"profile.hoursPerWeek":body.hoursPerWeek}})
+        }
+    }catch(err){
+        console.log(err);
+    }
+}   
+
+export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile}

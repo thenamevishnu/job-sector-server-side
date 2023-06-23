@@ -23,7 +23,10 @@ const user = new mongoose.Schema({
         },
         image:{
             type:String,
-            default:process.env.cloudinary + "/avatar.png"
+            default:"/job/default/avatar.png"
+        },
+        audio:{
+            type:String
         },
         email:{
             type:String,
@@ -40,6 +43,42 @@ const user = new mongoose.Schema({
         is_verified:{
             type:Boolean,
             default:false
+        },
+        hoursPerWeek:{
+            type:String,
+            default:"More than 30 hrs/week"
+        },
+        language:{
+            type:Array,
+            default:[]
+        },
+        education:{
+            type:Array,
+            default:[]
+        },
+        title:{
+            type:String,
+            default:"Data Entry"
+        },
+        work_history:{
+            type:String,
+            default:[]
+        },
+        skills:{
+            type:Array,
+            default:[]
+        },
+        my_projects:{
+            type:Array,
+            default:[]
+        },
+        certificates:{
+            type:Array,
+            default:[]
+        },
+        employment_history:{
+            type:Array,
+            default:[]
         }
     }
 })
