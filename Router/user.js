@@ -7,8 +7,10 @@ router.post("/signup",UserController.signup)
 router.post("/login",UserController.Login)
 router.post("/auth",UserController.auth)
 router.post("/getUserData",UserController.getUserData)
+router.get("/getUserDataByEmail/:email",UserController.getUserDataByEmail)
 router.post("/update-profile-pic",upload.single("image"),UserController.updatePic)
 router.post("/update-profile-audio",uploadAudio.single("audio"),UserController.updateAudio)
 router.post("/changeProfileData",UserController.updateProfile)
+router.post("/resetPassword/:email",UserController.resetPassword)
 
 export default router

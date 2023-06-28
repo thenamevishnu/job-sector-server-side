@@ -2,50 +2,61 @@ import { userSchema } from "../Model/userModel.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { uploadCloud } from "../Middleware/Cloudinary.js";
+import { resetLink, sendMail } from "../Mail.js";
 
 const signup = async (req, res, next) => {
     try{
         const obj = {}
         let {userData} = req.body
         console.log(userData);
-        const regex = {
-            full_name : /^([\w\WA-Za-z])([\w\WA-Za-z\s]){3,11}$/gm,
-            username : /^([_a-z])([a-z0-9]){3,11}$/gm,
-            email : /^([\w\W])([\w\W])+@([a-zA-Z0-9]){3,6}.([a-zA-Z0-9]){2,3}$/gm,
-            password : /^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[!@#$%^&*().\\?]).{8,16}$/gm
-       }
-        if(!regex.full_name.test(userData.full_name)){
+        const result = await userSchema.findOne({"profile.email":userData.email})
+        if(result){
             obj.status = false
-            obj.message = "invalid first name!"
-        }else if(!regex.username.test(userData.username)){
-            obj.status = false
-            obj.message = "Invalid last name!"
-        }else if(!regex.email.test(userData.email)){
-            obj.status = false
-            obj.message = "Invalid email format!"
-        }else if(!regex.password.test(userData.password)){
-            obj.status = false
-            obj.message = "Invalid password!"
+            obj.message = "Email already exist!"
         }else{
-            const result = await userSchema.findOne({"profile.email":userData.email})
-            if(result){
+            const response = await userSchema.findOne({"profile.username":userData.username})
+            if(response){
                 obj.status = false
-                obj.message = "Email already exist!"
+                obj.message = "Username already exist!"
             }else{
-                const response = await userSchema.findOne({"profile.username":userData.email})
-                if(response){
-                    obj.status = false
-                    obj.message = "Username already exist!"
+                if(!userData.signup_method){
+                    if(!userData.otp && !req.session?.otp){
+                        const response = await sendMail(userData.email)
+                        if(response.status){
+                            obj.message = "Otp sent to "+userData.email
+                            obj.status = "sent"
+                            obj.otp = response.otp
+                            req.session.otp = response.otp
+                        }else{
+                            obj.status="error"
+                            obj.message="Error happend!"
+                        }
+                    }else{
+                        console.log(userData.otp, req.session.otp)
+                        if(isNaN(userData.otp) || parseInt(userData.otp) !== req.session.otp){
+                            obj.status = "invalid"
+                            obj.message = "Invalid otp!"
+                        }else{
+                            const json = {
+                                profile:userData
+                            }
+                            json.profile.password = await bcrypt.hash(json.profile.password,10)
+                            await userSchema.insertMany([json])
+                            obj.status = true
+                            obj.message = "Registration Successful!"   
+                        }
+                        
+                    }
                 }else{
                     const json = {
-                            profile:userData
-                        }
+                        profile:userData
+                    }
                     json.profile.password = await bcrypt.hash(json.profile.password,10)
                     await userSchema.insertMany([json])
                     obj.status = true
-                    obj.message = "Registration Successful!"  
-                } 
-            }
+                    obj.message = "Registration Successful!"   
+                }
+            } 
         }
         res.json(obj)
     }catch(err){
@@ -117,8 +128,63 @@ const auth = async (req, res, next) => {
 const getUserData = async (req, res, next) => {
     try{
         const response = await userSchema.findOne({_id:req.body.id})
-        console.log(response);
         res.json(response)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const getUserDataByEmail = async (req, res, next) => {
+    try{
+        const obj = {}
+        const response = await userSchema.findOne({"profile.email":req.params.email})
+        if(!response){
+            obj.status = false
+            obj.message = "No User Found!"
+        }else{
+            if(response.signup_method == "google"){
+                obj.status = false
+                obj.message = "You can login with google!"
+            }else{
+                const response = await resetLink(req.params.email)
+                if(!response.status){
+                    obj.status = false
+                    obj.message = "Failed to send an email!"
+                }else{
+                    obj.status = true
+                    obj.message = "Check your email for reset link!"
+                    obj.key = response.key
+                }
+            }
+            
+        }
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const resetPassword = async (req, res, next) => {
+    try{
+        const password = req.body
+        const email = req.params.email
+        const obj = {}
+        const checkPass = await userSchema.findOne({"profile.email":email})
+        console.log(checkPass);
+        if(checkPass){
+            const pass = await bcrypt.compare(password.newPassword, checkPass.profile.password)
+            console.log(pass);
+            if(pass){
+                obj.status = false
+                obj.message = "Password is same as your old password!"
+            }else{
+                password.newPassword = await bcrypt.hash(password.newPassword,10)
+                await userSchema.updateOne({"profile.email":email},{$set:{"profile.password":password.newPassword}})
+                obj.status = true
+                obj.message = "Password reset successful!"
+            }
+        }
+        res.json(obj)
     }catch(err){
         console.log(err)
     }
@@ -129,7 +195,6 @@ const updatePic = async (req, res, next) => {
         const {user_id} = req.body
         const imgUrl=req.file.filename
         const dp = await uploadCloud(imgUrl,1)
-        console.log(dp);
         await userSchema.updateOne({_id:user_id},{$set:{"profile.image":dp}})
         res.json({status:true,dp:dp})
     }catch(err){
@@ -155,9 +220,113 @@ const updateProfile = async (req, res, next) => {
         if(body?.hoursPerWeek){
             await userSchema.updateOne({_id:body.id},{$set:{"profile.hoursPerWeek":body.hoursPerWeek}})
         }
+        if(body?.language){
+            const language = await userSchema.findOne({_id:body.id,"profile.language.lang":body.language.lang})
+            if(language){
+                res.json({status:false,message:"Language already exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.language":body.language}})
+                const languages = await userSchema.findOne({_id:body.id})
+                res.json({status:true,languages:languages.profile.language})
+            }  
+        }
+        if(body?.education){
+            const regexp = new RegExp(""+body.education.name+"","i")
+            const education = await userSchema.findOne({_id:body.id,"profile.education.name":{$regex:regexp}})
+            if(education){
+                res.json({status:false,message:"College/School already exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.education":body.education}})
+                const educations = await userSchema.findOne({_id:body.id})
+                res.json({status:true,educations:educations.profile.education})
+            }  
+        }
+        if(body?.bio){
+            await userSchema.updateOne({_id:body.id},{$set:{"profile.title":body.bio.title,"profile.per_hour":body.bio.per_hour,"profile.description":body.bio.description}})
+            const bio = await userSchema.findOne({_id:body.id})
+            res.json({status:true,bio:bio.profile}) 
+        }
+        if(body?.skill){
+            const regexp = new RegExp(""+body.skill.skills+"","i")
+            const skill = await userSchema.findOne({_id:body.id,"profile.skills":{$regex:regexp}})
+            if(skill){
+                res.json({status:false,message:"Skill is exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.skills":body.skill.skills}})
+                const skills = await userSchema.findOne({_id:body.id})
+                console.log(skills);
+                res.json({status:true,skills:skills.profile.skills})
+            }  
+        }
+        if(body?.project){
+            const regexp = new RegExp(""+body.project.url+"","i")
+            const project = await userSchema.findOne({_id:body.id,"profile.my_projects.url":{$regex:regexp}})
+            if(project){
+                res.json({status:false,message:"Project is exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.my_projects":body.project}})
+                const projects = await userSchema.findOne({_id:body.id})
+                res.json({status:true,projects:projects.profile.my_projects})
+            }  
+        }
+        if(body?.employment){
+            const regexp1 = new RegExp(""+body.employment.company+"","i")
+            const regexp2 = new RegExp(""+body.employment.title+"","i")
+            const employment = await userSchema.findOne({_id:body.id,"profile.employment_history.company":{$regex:regexp1},"profile.employment_history.title":{$regex:regexp2}})
+            if(employment){
+                res.json({status:false,message:"Company and title is exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.employment_history":body.employment}})
+                const employments = await userSchema.findOne({_id:body.id})
+                res.json({status:true,employments:employments.profile.employment_history})
+            }  
+        }
+        if(body?.certificate){
+            const regexp1 = new RegExp(""+body.certificate.provider+"","i")
+            const regexp2 = new RegExp(""+body.certificate.title+"","i")
+            const regexp3 = new RegExp(""+body.certificate.link+"","i")
+            const certificate = await userSchema.findOne({_id:body.id,"profile.certificates.provider":{$regex:regexp1},"profile.certificates.title":{$regex:regexp2},"profile.certificates.link":{$regex:regexp3}})
+            if(certificate){
+                res.json({status:false,message:"Certificate is exist!"})
+            }else{
+                await userSchema.updateOne({_id:body.id},{$push:{"profile.certificates":body.certificate}})
+                const certificates = await userSchema.findOne({_id:body.id})
+                res.json({status:true,certificates:certificates.profile.certificates})
+            }  
+        }
+        if(body?.deleteLanguage){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.language":body.obj}})
+            const languages = await userSchema.findOne({_id:body.id})
+            res.json({status:true,languages:languages.profile.language})
+        }
+        if(body?.deleteEducation){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.education":body.obj}})
+            const educations = await userSchema.findOne({_id:body.id})
+            res.json({status:true,educations:educations.profile.education})
+        }
+        if(body?.deleteSkill){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.skills":body.value}})
+            const skills = await userSchema.findOne({_id:body.id})
+            res.json({status:true,skills:skills.profile.skills})
+        }
+        if(body?.deleteProject){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.my_projects":body.obj}})
+            const projects = await userSchema.findOne({_id:body.id})
+            res.json({status:true,projects:projects.profile.my_projects})
+        }
+        if(body?.deleteEmployment){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.employment_history":body.obj}})
+            const employments = await userSchema.findOne({_id:body.id})
+            res.json({status:true,employments:employments.profile.employment_history})
+        }
+        if(body?.deleteCertificate){
+            await userSchema.updateOne({_id:body.id},{$pull:{"profile.certificates":body.obj}})
+            const certificates = await userSchema.findOne({_id:body.id})
+            res.json({status:true,certificates:certificates.profile.certificates})
+        }
     }catch(err){
         console.log(err);
     }
 }   
 
-export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile}
+export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword}

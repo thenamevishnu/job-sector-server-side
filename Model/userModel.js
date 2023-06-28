@@ -15,7 +15,8 @@ const user = new mongoose.Schema({
         },
         username:{
             type:String,
-            required:true
+            required:true,
+            unique:true
         },
         account_type:{
             type:String,
@@ -30,7 +31,8 @@ const user = new mongoose.Schema({
         },
         email:{
             type:String,
-            required:true
+            required:true,
+            unique:true
         },
         password:{
             type:String,
@@ -60,8 +62,12 @@ const user = new mongoose.Schema({
             type:String,
             default:"Data Entry"
         },
-        work_history:{
+        description:{
             type:String,
+            default:"I am a data entry freelancer."
+        },
+        work_history:{
+            type:Array,
             default:[]
         },
         skills:{
@@ -79,6 +85,14 @@ const user = new mongoose.Schema({
         employment_history:{
             type:Array,
             default:[]
+        },
+        per_hour:{
+            type:Number,
+            default:1,
+        },
+        signup_method:{
+            type:String,
+            default:null
         }
     }
 })
