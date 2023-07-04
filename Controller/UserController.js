@@ -324,6 +324,10 @@ const updateProfile = async (req, res, next) => {
             const certificates = await userSchema.findOne({_id:body.id})
             res.json({status:true,certificates:certificates.profile.certificates})
         }
+        if(body?.checkStatus){
+            console.log(body);
+            await userSchema.updateOne({_id:body.id},{$set:{"profile.available":body.value}})
+        }
     }catch(err){
         console.log(err);
     }

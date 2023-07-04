@@ -14,7 +14,8 @@
     "mongoose": "^7.3.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.3",
-    "sha256": "^0.2.0"
+    "sha256": "^0.2.0",
+    "socket.io": "^4.7.1"
   },
   "type": "module"
 }

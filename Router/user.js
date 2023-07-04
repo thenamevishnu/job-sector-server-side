@@ -2,6 +2,8 @@ import express from "express"
 const router = express.Router()
 import UserController from "../Controller/UserController.js"
 import { upload, uploadAudio } from "../Middleware/Multer.js"
+import postController from "../Controller/postController.js"
+import chatController from "../Controller/chatController.js"
 
 router.post("/signup",UserController.signup)
 router.post("/login",UserController.Login)
@@ -12,5 +14,15 @@ router.post("/update-profile-pic",upload.single("image"),UserController.updatePi
 router.post("/update-profile-audio",uploadAudio.single("audio"),UserController.updateAudio)
 router.post("/changeProfileData",UserController.updateProfile)
 router.post("/resetPassword/:email",UserController.resetPassword)
+
+router.post("/post-job",postController.postJob)
+router.get("/getPostData",postController.getPostData)
+router.get("/get-single-post/:id",postController.getSinglePost)
+
+router.post("/saveJobs",postController.saveJobs)
+router.post("/sendProposal",postController.sendProposal)
+
+router.get("/chats",chatController.chat)
+router.get("/getMyPost/:id",postController.getMyPost)
 
 export default router

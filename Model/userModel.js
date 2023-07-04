@@ -4,10 +4,6 @@ import dotenv from "dotenv"
 dotenv.config()
 
 const user = new mongoose.Schema({
-    // user_id:{
-    //     type:String,
-    //     required:true
-    // },
     profile:{
         full_name:{
             type:String,
@@ -37,6 +33,16 @@ const user = new mongoose.Schema({
         password:{
             type:String,
             required:true
+        },
+        connections:{
+            count:{
+                type:Number,
+                default:0
+            },
+            ids:{
+                type:Array,
+                default:[]
+            }
         },
         country:{
             type:String,
@@ -93,7 +99,35 @@ const user = new mongoose.Schema({
         signup_method:{
             type:String,
             default:null
+        },
+        available:{
+            type:Boolean,
+            default:1
+        },
+        rating:{
+            type:Number,
+            default:0
         }
+    },
+    saved_jobs:{
+        type:Array,
+        default:[]
+    },
+    dislike:{
+        type:Array,
+        default:[]
+    },
+    spent:{
+        type:Number,
+        default:0
+    },
+    balance:{
+        type:Number,
+        default:0
+    },
+    my_proposals:{
+        type:Array,
+        default:[]
     }
 })
 
