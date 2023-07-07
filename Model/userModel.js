@@ -113,6 +113,10 @@ const user = new mongoose.Schema({
         type:Array,
         default:[]
     },
+    rejected_jobs:{
+        type:Array,
+        default:[]
+    },
     dislike:{
         type:Array,
         default:[]

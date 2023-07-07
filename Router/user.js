@@ -25,4 +25,17 @@ router.post("/sendProposal",postController.sendProposal)
 router.get("/chats",chatController.chat)
 router.get("/getMyPost/:id",postController.getMyPost)
 
+router.post("/changePostStatus/:id/:user_id/:status",postController.changePostStatus)
+router.get("/getMyProposals/:id",postController.getMyProposals)
+
+router.get("/getLatest",postController.getLatest)
+router.get("/bestMatch/:id",postController.bestMatch)
+router.get("/getSavedPost/:id",postController.getSaved)
+
+router.post("/removeSaved/:user_id/:post_id",postController.removeSaved)
+
+router.get("/client-post-view/:post_id",postController.getClientPost)
+router.post("/reject-proposals",postController.setRejectedProposal)
+router.post("/accept-proposals",postController.setAcceptedProposal)
+
 export default router

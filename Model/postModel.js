@@ -8,6 +8,10 @@ const posts = new mongoose.Schema({
         type:mongoose.Types.ObjectId,
         required:true
     },
+    status:{
+        type:Boolean,
+        default:1
+    },
     title:{
         type:String,
         required:true

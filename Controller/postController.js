@@ -18,6 +18,10 @@ const getPostData = async (req, res, next) => {
     try{
         const postData = await postSchema.aggregate([
             {
+                $match:{
+                    status:true
+                }
+            },{
                 $lookup:{
                     from:"users",
                     localField:"user_id",
@@ -34,9 +38,90 @@ const getPostData = async (req, res, next) => {
                     }],
                     as:"auther"
                 }
+            },{
+                $sort:{
+                    posted:-1
+                }
             }
         ])
         res.json({status:true,postInfo:postData})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const getLatest = async (req, res, next) => {
+    try{
+        const postData = await postSchema.aggregate([
+            {
+                $match:{
+                    status:true
+                }
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"user_id",
+                    foreignField:"_id",
+                    pipeline:[{
+                        $project:{
+                            _id:1,
+                            "profile.rating":1,
+                            spent:1,
+                            "profile.country":1,
+                            "profile.image":1,
+                            "profile.is_verified":1
+                        }
+                    }],
+                    as:"auther"
+                }
+            },{
+                $sort:{
+                    posted:-1
+                }
+            },{
+                $limit:6
+            }
+        ])
+        res.json({status:true,postData:postData})
+    }catch(err){
+        console.log(err)
+    }
+} 
+
+const getSaved = async (req, res, next) => {
+    try{
+        const getSave = await userSchema.findOne({_id:req.params.id})
+        const postData = await postSchema.aggregate([
+            {
+                $match:{
+                    _id:{
+                        $in:getSave.saved_jobs
+                    }
+                }
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"user_id",
+                    foreignField:"_id",
+                    pipeline:[{
+                        $project:{
+                            _id:1,
+                            "profile.rating":1,
+                            spent:1,
+                            "profile.country":1,
+                            "profile.image":1,
+                            "profile.is_verified":1
+                        }
+                    }],
+                    as:"auther"
+                }
+            },{
+                $sort:{
+                    posted:-1
+                }
+            }
+        ])
+        res.json({status:true,postData:postData})
     }catch(err){
         console.log(err)
     }
@@ -48,7 +133,8 @@ const getSinglePost = async (req, res, next) => {
         const postData = await postSchema.aggregate([
             {
                 $match:{
-                    _id:new mongoose.Types.ObjectId(post_id)
+                    _id:new mongoose.Types.ObjectId(post_id),
+                    status:true
                 }
             },{
                 $lookup:{
@@ -77,8 +163,9 @@ const getSinglePost = async (req, res, next) => {
                     _id:{
                         $ne:new mongoose.Types.ObjectId(post_id)
                     },
+                    status:true,
                     skillsNeed:{
-                        $in:postData[0]?.skillsNeed
+                        $in:postData[0]?.skillsNeed ?? []
                     }
                 }
             },{
@@ -110,11 +197,11 @@ const saveJobs = async (req, res, next) => {
     try{
         const obj = {}
         const {post_id,user_id} = req.body
-        const response = await userSchema.findOne({_id:user_id,saved_jobs:post_id})
+        const response = await userSchema.findOne({_id:user_id,saved_jobs:new mongoose.Types.ObjectId(post_id)})
         if(!response){
             obj.status = true
             obj.message = "Job added to saved list"
-            await userSchema.updateOne({_id:user_id},{$push:{saved_jobs:post_id}})
+            await userSchema.updateOne({_id:user_id},{$push:{saved_jobs:new mongoose.Types.ObjectId(post_id)}})
         }else{
             obj.status = false
             obj.message = "Job already saved!"
@@ -125,24 +212,85 @@ const saveJobs = async (req, res, next) => {
     }
 }
 
+const setRejectedProposal = async (req, res, next) => {
+    try{
+        const obj = {}
+        const {post_id,user_id} = req.body
+        const exist = await userSchema.findOne({_id:user_id,rejected_jobs:new mongoose.Types.ObjectId(post_id)})
+        if(exist){
+            obj.status = false
+            obj.message = "Already rejected!"
+        }else{
+            await userSchema.updateOne({_id:user_id},{$push:{rejected_jobs:new mongoose.Types.ObjectId(post_id)}})
+            await userSchema.updateOne({_id:user_id},{$pull:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}})
+            await postSchema.updateOne({_id:post_id},{$pull:{proposals:new mongoose.Types.ObjectId(user_id)}})
+            obj.status = true
+            obj.message = "Proposal rejected!"
+        }
+        const postData = await postSchema.findOne({_id:post_id})
+        const userData = await userSchema.find({_id:{$in:postData.proposals}})
+        obj.userData = userData
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const setAcceptedProposal = async (req, res, next) => {
+    try{
+        const obj = {}
+        const {post_id,user_id} = req.body
+        const done = await userSchema.findOne({_id:user_id,my_proposals:{$elemMatch:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
+        if(done){
+            obj.status = false
+            obj.message = "Proposal Already Accepted!"
+        }else{
+            await userSchema.updateOne({_id:user_id},{$pull:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}})
+            await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
+            obj.status = true
+            obj.message = "Proposal Accepted!"
+        }
+        const postData = await postSchema.findOne({_id:post_id})
+        const userData = await userSchema.find({_id:{$in:postData.proposals}})
+        obj.userData = userData
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
 const sendProposal = async (req, res, next) => {
     try{
         const obj = {}
         const {post_id,user_id} = req.body
-        const response = await userSchema.findOne({_id:user_id,my_proposals:post_id})
-        if(!response){
-            const response1 = await postSchema.updateOne({_id:post_id},{$push:{proposals:user_id}})
-            const response2 = await userSchema.updateOne({_id:user_id},{$push:{my_proposals:post_id}}) 
-            if(response1.modifiedCount === 1 && response2.modifiedCount === 1){
-                obj.status = true
-                obj.message = "Proposal sent!"
-            }else{
-                obj.status = false
-                obj.message = "Something error happend!"
-            }
-        }else{
+        const userData = await userSchema.findOne({_id:user_id})
+        const postData = await postSchema.findOne({_id:post_id})
+        const response = await userSchema.findOne({_id:user_id,rejected_jobs:new mongoose.Types.ObjectId(post_id)})
+        if(response){
             obj.status = false
-            obj.message = "Proposal already sent!"
+            obj.message = "Can't send, because you're rejected before!"
+        }else{
+            if(userData?.profile?.connections?.count < postData?.connectionsNeed?.from){
+                obj.status = false
+                obj.warn = "warn"
+                obj.message = `Need atleast ${postData?.connectionsNeed?.from} connections!`
+            }else{
+                const response = await userSchema.findOne({_id:user_id,"my_proposals.post_id":new mongoose.Types.ObjectId(post_id)})
+                if(!response){
+                    const response1 = await postSchema.updateOne({_id:post_id},{$push:{proposals:new mongoose.Types.ObjectId(user_id)}})
+                    const response2 = await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}}) 
+                    if(response1.modifiedCount === 1 && response2.modifiedCount === 1){
+                        obj.status = true
+                        obj.message = "Proposal sent!"
+                    }else{
+                        obj.status = false
+                        obj.message = "Something error happend!"
+                    }
+                }else{
+                    obj.status = false
+                    obj.message = "Proposal already sent!"
+                }
+            }
         }
         const info = await postSchema.findOne({_id:post_id})
         obj.response = info?.proposals
@@ -162,4 +310,141 @@ const getMyPost = async (req, res, next) => {
     }
 }
 
-export default {postJob, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost}
+const getMyProposals = async (req, res, next) => {
+    try{
+        const user_id = req.params.id
+
+        const getPosts = await userSchema.aggregate([
+            {
+                $match:{
+                    _id:new mongoose.Types.ObjectId(user_id)
+                }
+            },{
+                $project:{
+                    _id:1,
+                    my_proposals:1
+                }
+            },{
+                $unwind:"$my_proposals"
+            },{
+                $lookup:{
+                    from:"posts",
+                    localField:"my_proposals.post_id",
+                    foreignField:"_id",
+                    as:"post_info"
+                }
+            }
+        ])
+
+        // const all_ids = posts.my_proposals
+        // const result = all_ids.map(item => item.post_id)
+        // const getPosts = await postSchema.find({_id:{$in:result}})
+        res.json({status:true,postData:getPosts})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const changePostStatus = async (req, res, next) => {
+    try{
+        await postSchema.updateOne({_id:req.params.id},{$set:{status:req.params.status}})
+        const postData = await postSchema.find({user_id:req.params.user_id})
+        res.json({status:true,postData:postData})
+    }catch(err) {
+        console.log(err)
+    }
+}
+
+const bestMatch = async (req, res, next) => {
+    try{
+        const getUser = await userSchema.findOne({_id:req.params.id})
+        const postData = await postSchema.aggregate([
+            {
+                $match:{
+                    status:true,
+                    skillsNeed:{
+                        $elemMatch:{
+                            $in:getUser.profile.skills
+                        }
+                    }
+                }
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"user_id",
+                    foreignField:"_id",
+                    pipeline:[{
+                        $project:{
+                            _id:1,
+                            "profile.rating":1,
+                            spent:1,
+                            "profile.country":1,
+                            "profile.image":1,
+                            "profile.is_verified":1
+                        }
+                    }],
+                    as:"auther"
+                }
+            },{
+                $sort:{
+                    posted:-1
+                }
+            }
+        ])
+        res.json({status:true,postData:postData})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const removeSaved = async (req, res, next) => {
+    try{    
+        await userSchema.updateOne({_id:req.params.user_id},{$pull:{saved_jobs:new mongoose.Types.ObjectId(req.params.post_id)}})
+        const getSave = await userSchema.findOne({_id:req.params.user_id})
+        const postData = await postSchema.aggregate([
+            {
+                $match:{
+                    _id:{
+                        $in:getSave.saved_jobs
+                    }
+                }
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"user_id",
+                    foreignField:"_id",
+                    pipeline:[{
+                        $project:{
+                            _id:1,
+                            "profile.rating":1,
+                            spent:1,
+                            "profile.country":1,
+                            "profile.image":1,
+                            "profile.is_verified":1
+                        }
+                    }],
+                    as:"auther"
+                }
+            },{
+                $sort:{
+                    posted:-1
+                }
+            }
+        ])
+        res.json({status:true,postData:postData})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const getClientPost = async (req, res, next) => {
+    try{
+        const postData = await postSchema.findOne({_id:req.params.post_id})
+        const userData = await userSchema.find({_id:{$in:postData.proposals}})
+        res.json({status:true,postData:postData,userData:userData})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default {postJob, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal}
