@@ -14,6 +14,18 @@ const postJob = async (req, res, next) => {
     }
 }
 
+const updateJob = async (req, res, next) => {
+    try{
+        const {postData} = req.body
+        const {post_id,user_id,...rest} = postData
+        const data = await postSchema.updateOne({_id:new mongoose.Types.ObjectId(postData.post_id)},{$set:rest})
+        console.log(data);
+        res.json({status:true})
+    }catch(err){
+        console.log(err)
+    }
+}
+
 const getPostData = async (req, res, next) => {
     try{
         const postData = await postSchema.aggregate([
@@ -447,4 +459,4 @@ const getClientPost = async (req, res, next) => {
     }
 }
 
-export default {postJob, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal}
+export default {postJob, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}

@@ -16,6 +16,8 @@ router.post("/changeProfileData",UserController.updateProfile)
 router.post("/resetPassword/:email",UserController.resetPassword)
 
 router.post("/post-job",postController.postJob)
+router.post("/update-job",postController.updateJob)
+
 router.get("/getPostData",postController.getPostData)
 router.get("/get-single-post/:id",postController.getSinglePost)
 
@@ -37,5 +39,7 @@ router.post("/removeSaved/:user_id/:post_id",postController.removeSaved)
 router.get("/client-post-view/:post_id",postController.getClientPost)
 router.post("/reject-proposals",postController.setRejectedProposal)
 router.post("/accept-proposals",postController.setAcceptedProposal)
+
+router.get("/getAllUsersSkills",UserController.getAllUsersSkills)
 
 export default router

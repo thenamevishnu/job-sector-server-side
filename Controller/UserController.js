@@ -214,6 +214,32 @@ const updateAudio = async (req, res, next) => {
     }
 }
 
+const getAllUsersSkills = async (req, res, next) => {
+    try{
+        const userData = await userSchema.aggregate([
+            {
+                $project:{
+                    _id:0,
+                    "profile.skills":1
+                }
+            },{
+                $unwind:"$profile.skills"
+            },{
+                $group:{
+                    _id:null,
+                    uniqueArray:{
+                        $addToSet:"$profile.skills"
+                    }
+                }
+            }
+        ])
+        const skills = userData?.length > 0 ? userData[0]?.uniqueArray : null
+        res.json({status:true,skills:skills})
+    }catch(err){    
+        console.log(err)
+    }
+}
+
 const updateProfile = async (req, res, next) => {
     try{
         const body = req.body
@@ -333,4 +359,4 @@ const updateProfile = async (req, res, next) => {
     }
 }   
 
-export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword}
+export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
