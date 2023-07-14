@@ -24,7 +24,8 @@ router.get("/get-single-post/:id",postController.getSinglePost)
 router.post("/saveJobs",postController.saveJobs)
 router.post("/sendProposal",postController.sendProposal)
 
-router.get("/chats",chatController.chat)
+router.post("/chats",chatController.chat)
+router.get("/getChatList/:user_id",chatController.getChatList)
 router.get("/getMyPost/:id",postController.getMyPost)
 
 router.post("/changePostStatus/:id/:user_id/:status",postController.changePostStatus)

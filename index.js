@@ -4,6 +4,7 @@ import mongoose from "mongoose"
 import cookieParser from "cookie-parser"
 import userRouter from "./Router/user.js"
 import adminRouter from "./Router/admin.js"
+import chatRouter from "./Router/chat.js"
 import dotenv from "dotenv"
 import session from "express-session"
 import { Server, Socket } from "socket.io"
@@ -55,3 +56,4 @@ mongoose.connect(process.env.db_url, {
 
 app.use('/',userRouter)
 app.use('/admin',adminRouter)
+app.use('/chat',chatRouter)
