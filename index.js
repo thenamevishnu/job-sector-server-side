@@ -18,22 +18,32 @@ const server = app.listen(3001,()=>{
 })
 
 const io = new Server(server,{
+    pingTimeout:60000,
     cors:{
-        origin:process.env.origin,
-        methods:["GET","POST"]
+        origin:process.env.origin
     }
 })
 
 io.on("connection",(socket)=>{
+// console.log(socket.id);
+    socket.on("setup",(user_id)=>{
+        socket.join(user_id)
+    })
 
-    socket.on("join_room",(room)=>{
+    socket.on("join_chat",(room)=>{
         socket.join(room)
     })
 
-    socket.on('sendMessage',(data)=>{
-        console.log(data);
-        socket.to(data.room).emit("receivedMessage",data)
+    socket.on("new_message",(messageData)=>{
+        const chat = messageData.chat_id
+        if(!chat.users){ console.log("not defined!"); return}
+        chat.users.forEach(user => {
+            if(user._id === messageData.sender._id) return
+            socket.in(user._id).emit("receive_message",messageData)
+        })
     })
+
+    socket.on("typing", (room) => socket.in(room).emit("typing"))
 })
 
 app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))
