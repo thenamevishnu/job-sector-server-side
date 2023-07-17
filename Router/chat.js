@@ -4,5 +4,6 @@ const router = express.Router()
 
 router.post("/send-message",chatController.sendMessage)
 router.get("/get-all-messages/:chat_id",chatController.getAllMessages)
+router.post("/unreadMessage",chatController.unreadMessage)
 
 export default router

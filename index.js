@@ -25,7 +25,7 @@ const io = new Server(server,{
 })
 
 io.on("connection",(socket)=>{
-// console.log(socket.id);
+
     socket.on("setup",(user_id)=>{
         socket.join(user_id)
     })
@@ -44,6 +44,7 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("typing", (room) => socket.in(room).emit("typing"))
+    socket.on("stop typing", (room) => socket.emit("stop typing"))
 })
 
 app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))
