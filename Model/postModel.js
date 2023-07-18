@@ -58,6 +58,10 @@ const posts = new mongoose.Schema({
     proposals:{
         type:Array,
         default:[]
+    },
+    completed:{
+        type:Boolean,
+        default:0
     }
 })
 

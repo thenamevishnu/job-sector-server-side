@@ -3,6 +3,7 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { uploadCloud } from "../Middleware/Cloudinary.js";
 import { resetLink, sendMail } from "../Mail.js";
+import mongoose from "mongoose";
 
 const signup = async (req, res, next) => {
     try{
@@ -40,7 +41,7 @@ const signup = async (req, res, next) => {
                             const json = {
                                 profile:userData
                             }
-                            json.profile.password = await bcrypt.hash(json.profile.password,10)
+                            json.profile.password = await bcrypt.hash(json?.profile?.password,10)
                             await userSchema.insertMany([json])
                             obj.status = true
                             obj.message = "Registration Successful!"   
@@ -51,7 +52,7 @@ const signup = async (req, res, next) => {
                     const json = {
                         profile:userData
                     }
-                    json.profile.password = await bcrypt.hash(json.profile.password,10)
+                    json.profile.password = await bcrypt.hash(json?.profile?.password,10)
                     await userSchema.insertMany([json])
                     obj.status = true
                     obj.message = "Registration Successful!"   
@@ -240,6 +241,32 @@ const getAllUsersSkills = async (req, res, next) => {
     }
 }
 
+const addConnection = async (req, res, next) => {
+    try{
+        const {follower,to} = req.body
+        const obj = {}
+        const connections = await userSchema.findOne({_id:new mongoose.Types.ObjectId(follower),"profile.connections.my_connections":{$in:[new mongoose.Types.ObjectId(to)]}})
+        if(connections){
+            obj.status = false
+            obj.message = "Already connected!"
+        }else{
+            const connections = await userSchema.findOne({_id:new mongoose.Types.ObjectId(to),"profile.connections.ids":{$in:[new mongoose.Types.ObjectId(follower)]}})
+            if(connections){
+                obj.status = false
+                obj.message = "Already connected!"
+            }else{
+                await userSchema.updateOne({_id:new mongoose.Types.ObjectId(follower)},{$push:{"profile.connections.my_connections":new mongoose.Types.ObjectId(to)}})
+                await userSchema.updateOne({_id:new mongoose.Types.ObjectId(to)},{$push:{"profile.connections.ids":new mongoose.Types.ObjectId(follower)},$inc:{"profile.connections.count":1}})
+                obj.status = true
+                obj.message = "Connection successful!"
+            }
+        }
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
 const updateProfile = async (req, res, next) => {
     try{
         const body = req.body
@@ -359,4 +386,4 @@ const updateProfile = async (req, res, next) => {
     }
 }   
 
-export default {signup,Login,auth,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+export default {signup,Login,auth,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}

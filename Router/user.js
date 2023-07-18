@@ -27,6 +27,8 @@ router.post("/sendProposal",postController.sendProposal)
 router.post("/chats",chatController.chat)
 router.get("/getChatList/:user_id",chatController.getChatList)
 router.get("/getMyPost/:id",postController.getMyPost)
+router.post("/delete-post",postController.deletePost)
+router.post("/completed-post",postController.completedPost)
 
 router.post("/changePostStatus/:id/:user_id/:status",postController.changePostStatus)
 router.get("/getMyProposals/:id",postController.getMyProposals)
@@ -42,5 +44,5 @@ router.post("/reject-proposals",postController.setRejectedProposal)
 router.post("/accept-proposals",postController.setAcceptedProposal)
 
 router.get("/getAllUsersSkills",UserController.getAllUsersSkills)
-
+router.post("/addConnection",UserController.addConnection)
 export default router

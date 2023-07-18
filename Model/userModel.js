@@ -42,6 +42,10 @@ const user = new mongoose.Schema({
             ids:{
                 type:Array,
                 default:[]
+            },
+            my_connections:{
+                type:Array,
+                default:[]
             }
         },
         country:{

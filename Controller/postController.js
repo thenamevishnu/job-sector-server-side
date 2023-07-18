@@ -31,7 +31,8 @@ const getPostData = async (req, res, next) => {
         const postData = await postSchema.aggregate([
             {
                 $match:{
-                    status:true
+                    status:true,
+                    completed:false
                 }
             },{
                 $lookup:{
@@ -67,7 +68,8 @@ const getLatest = async (req, res, next) => {
         const postData = await postSchema.aggregate([
             {
                 $match:{
-                    status:true
+                    status:true,
+                    completed:false
                 }
             },{
                 $lookup:{
@@ -146,7 +148,8 @@ const getSinglePost = async (req, res, next) => {
             {
                 $match:{
                     _id:new mongoose.Types.ObjectId(post_id),
-                    status:true
+                    status:true,
+                    completed:false
                 }
             },{
                 $lookup:{
@@ -367,6 +370,29 @@ const changePostStatus = async (req, res, next) => {
     }
 }
 
+const deletePost = async (req, res, next) => {
+    try{
+        const {post_id,user_id} = req.body
+        await userSchema.updateMany({},{$pull:{saved_jobs:new mongoose.Types.ObjectId(post_id),rejected_jobs:new mongoose.Types.ObjectId(post_id),my_proposals:{post_id:new mongoose.Types.ObjectId(post_id)}}})
+        await postSchema.deleteOne({_id:post_id})
+        const allPosts = await postSchema.find({user_id:user_id})
+        res.json({status:true,postData:allPosts})
+    }catch(err) {
+        console.log(err)
+    }
+}
+
+const completedPost = async (req, res, next) => {
+    try{
+        const {post_id,user_id} = req.body
+        await postSchema.updateOne({_id:post_id},{$set:{completed:1}})
+        const allPosts = await postSchema.find({user_id:user_id})
+        res.json({status:true,postData:allPosts})
+    }catch(err) {
+        console.log(err)
+    }
+}
+
 const bestMatch = async (req, res, next) => {
     try{
         const getUser = await userSchema.findOne({_id:req.params.id})
@@ -459,4 +485,4 @@ const getClientPost = async (req, res, next) => {
     }
 }
 
-export default {postJob, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}
+export default {postJob, completedPost, deletePost, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}
