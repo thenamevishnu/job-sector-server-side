@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import { postSchema } from "../Model/postModel.js"
 import { userSchema } from "../Model/userModel.js"
+import {prefix} from "../Trie/Trie.js"
 
 const postJob = async (req, res, next) => {
     try{
@@ -13,6 +14,40 @@ const postJob = async (req, res, next) => {
         console.log(err)
     }
 }
+
+// const searchSuggestion = async (req, res, next) => {
+//     try{
+//         const getAllData = await postSchema.aggregate([
+//             {
+//                 $match:{
+//                     status:true,
+//                     completed:false
+//                 }
+//             },{
+//                 $project: {
+//                   _id: 1,
+//                   title: 1, 
+//                   description: 1, 
+//                   idAndTitle: {
+//                     _id: "$_id", 
+//                     title: "$title" 
+//                   },
+//                   idAndDescription: {
+//                     _id: "$_id", 
+//                     description: "$description"
+//                   }
+//                 }
+//             }
+//         ])
+//         const firstArray = getAllData.map(items => items.idAndTitle)
+//         const secondArray = getAllData.map(items => items.idAndDescription)
+//         const newArray = [...firstArray,...secondArray]
+//         prefix.UploadArray()
+//         res.json(newArray)
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
 
 const updateJob = async (req, res, next) => {
     try{
@@ -176,8 +211,9 @@ const getSinglePost = async (req, res, next) => {
             {
                 $match:{
                     _id:{
-                        $ne:new mongoose.Types.ObjectId(post_id)
+                        $ne:new mongoose.Types.ObjectId(post_id),
                     },
+                    completed:false,
                     status:true,
                     skillsNeed:{
                         $in:postData[0]?.skillsNeed ?? []
@@ -213,13 +249,16 @@ const saveJobs = async (req, res, next) => {
         const obj = {}
         const {post_id,user_id} = req.body
         const response = await userSchema.findOne({_id:user_id,saved_jobs:new mongoose.Types.ObjectId(post_id)})
+        const data = await userSchema.findOne({_id:user_id})
         if(!response){
             obj.status = true
             obj.message = "Job added to saved list"
+            obj.total = parseInt(data?.saved_jobs?.length) + 1
             await userSchema.updateOne({_id:user_id},{$push:{saved_jobs:new mongoose.Types.ObjectId(post_id)}})
         }else{
             obj.status = false
             obj.message = "Job already saved!"
+            obj.total = parseInt(data?.saved_jobs?.length)
         }
         res.json(obj)
     }catch(err){
@@ -400,6 +439,7 @@ const bestMatch = async (req, res, next) => {
             {
                 $match:{
                     status:true,
+                    completed:false,
                     skillsNeed:{
                         $elemMatch:{
                             $in:getUser.profile.skills
