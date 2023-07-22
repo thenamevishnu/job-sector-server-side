@@ -386,4 +386,25 @@ const updateProfile = async (req, res, next) => {
     }
 }   
 
-export default {signup,Login,auth,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+const addPaymentMethod = async (req, res, next) => {
+    try{
+        const obj = req.body
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(obj.user_id)},{$set:{[`withdrawal_methods.${obj.method}`]:{to:obj.to}}})
+        res.json({status:true})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const onPaymentCompleted = async (req, res, next) => {
+    try{
+        const {pay_id, amount,currency,user_id} = req.body
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user_id)},{$inc:{balance:amount},$push:{transactions:{to:null,amount:amount,currency:currency,pay_id:pay_id,time:new Date()}}})
+        const transactions = await userSchema.findOne({_id:user_id})
+        res.json({status:true,transactions:transactions})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default {onPaymentCompleted, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}

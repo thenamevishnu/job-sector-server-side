@@ -46,5 +46,8 @@ router.post("/accept-proposals",postController.setAcceptedProposal)
 router.get("/getAllUsersSkills",UserController.getAllUsersSkills)
 router.post("/addConnection",UserController.addConnection)
 
+router.post("/addPaymentMethod",UserController.addPaymentMethod)
+router.post("/onPaymentCompleted",UserController.onPaymentCompleted)
+
 // router.get("/searchSuggestion",postController.searchSuggestion)
 export default router

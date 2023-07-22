@@ -133,6 +133,27 @@ const user = new mongoose.Schema({
         type:Number,
         default:0
     },
+    transactions:[{
+        to:{
+            type:String
+        },
+        amount:{
+            type:Number
+        },
+        currency:{
+            type:String
+        },
+        pay_id:{
+            type:String
+        },
+        time:{
+            type:Date
+        }
+    }],
+    withdrawal_methods:{
+        type:Object,
+        default:null
+    },
     my_proposals:{
         type:Array,
         default:[]
