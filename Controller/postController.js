@@ -15,39 +15,34 @@ const postJob = async (req, res, next) => {
     }
 }
 
-// const searchSuggestion = async (req, res, next) => {
-//     try{
-//         const getAllData = await postSchema.aggregate([
-//             {
-//                 $match:{
-//                     status:true,
-//                     completed:false
-//                 }
-//             },{
-//                 $project: {
-//                   _id: 1,
-//                   title: 1, 
-//                   description: 1, 
-//                   idAndTitle: {
-//                     _id: "$_id", 
-//                     title: "$title" 
-//                   },
-//                   idAndDescription: {
-//                     _id: "$_id", 
-//                     description: "$description"
-//                   }
-//                 }
-//             }
-//         ])
-//         const firstArray = getAllData.map(items => items.idAndTitle)
-//         const secondArray = getAllData.map(items => items.idAndDescription)
-//         const newArray = [...firstArray,...secondArray]
-//         prefix.UploadArray()
-//         res.json(newArray)
-//     }catch(err){
-//         console.log(err)
-//     }
-// }
+const searchSuggestion = async (req, res, next) => {
+    try{
+        const prefixWord = req.params.query
+        const getAllData = await postSchema.aggregate([
+            {
+                $match:{
+                    status:true,
+                    completed:false
+                }
+            },{
+                $project: {
+                  _id: 1,
+                  title: 1, 
+                  description: 1, 
+                }
+            }
+        ])
+        const firstArray = getAllData.map(items => items.title)
+        const secondArray = getAllData.map(items => items.description)
+        const newArray = [...firstArray,...secondArray]
+        prefix.UploadArray(newArray)
+        const response = prefix.searchResponse(prefixWord)
+        console.log(response);
+        res.json({status:true,response:response})
+    }catch(err){
+        console.log(err)
+    }
+}
 
 const updateJob = async (req, res, next) => {
     try{
@@ -525,4 +520,4 @@ const getClientPost = async (req, res, next) => {
     }
 }
 
-export default {postJob, completedPost, deletePost, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}
+export default {postJob, completedPost, searchSuggestion, deletePost, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}

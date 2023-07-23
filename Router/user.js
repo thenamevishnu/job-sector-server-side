@@ -49,5 +49,5 @@ router.post("/addConnection",UserController.addConnection)
 router.post("/addPaymentMethod",UserController.addPaymentMethod)
 router.post("/onPaymentCompleted",UserController.onPaymentCompleted)
 
-// router.get("/searchSuggestion",postController.searchSuggestion)
+router.get("/getSearchResult/:query",postController.searchSuggestion)
 export default router

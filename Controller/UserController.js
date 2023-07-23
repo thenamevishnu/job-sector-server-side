@@ -401,7 +401,7 @@ const onPaymentCompleted = async (req, res, next) => {
         const {pay_id, amount,currency,user_id} = req.body
         await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user_id)},{$inc:{balance:amount},$push:{transactions:{to:null,amount:amount,currency:currency,pay_id:pay_id,time:new Date()}}})
         const transactions = await userSchema.findOne({_id:user_id})
-        res.json({status:true,transactions:transactions})
+        res.json({status:true,transactions:transactions.transactions})
     }catch(err){
         console.log(err)
     }
