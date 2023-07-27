@@ -4,6 +4,10 @@ import dotenv from "dotenv"
 dotenv.config()
 
 const user = new mongoose.Schema({
+    twoStep:{
+        type:Boolean,
+        default:0
+    },
     profile:{
         full_name:{
             type:String,
@@ -21,6 +25,9 @@ const user = new mongoose.Schema({
         image:{
             type:String,
             default:"/job/default/avatar.png"
+        },
+        pdf:{
+            type:String
         },
         audio:{
             type:String
@@ -148,6 +155,9 @@ const user = new mongoose.Schema({
         },
         time:{
             type:Date
+        },
+        status:{
+            type:String
         }
     }],
     withdrawal_methods:{
@@ -157,6 +167,28 @@ const user = new mongoose.Schema({
     my_proposals:{
         type:Array,
         default:[]
+    },
+    notifications:{
+        type:Object
+    },
+    banned:{
+        type:Boolean,
+        default:0
+    },
+    project_cost:[
+        {
+            amount:{
+                type:Number
+            }
+        },{
+            month:{
+                type:String
+            }
+        }
+    ],
+    cooldown:{
+        type:Number,
+        default:new Date()
     }
 })
 

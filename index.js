@@ -7,7 +7,7 @@ import adminRouter from "./Router/admin.js"
 import chatRouter from "./Router/chat.js"
 import dotenv from "dotenv"
 import session from "express-session"
-import { Server, Socket } from "socket.io"
+import { Server } from "socket.io"
 
 dotenv.config()
 
@@ -44,7 +44,17 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("typing", (room) => socket.in(room).emit("typing"))
-    socket.on("stop typing", (room) => socket.emit("stop typing"))
+    socket.on("stop typing", (room) => socket.in(room).emit("stop typing"))
+
+
+    socket.on("join-video-chat", async ({room_id, user_id}) => {
+        await socket.join(room_id)
+        socket.to(room_id).emit("newUser", user_id)
+    })
+
+    socket.on("sendMessageToPeer",(data) =>{
+        socket.to(data.user_id).emit("receivedPeerToPeer",data)
+    })
 })
 
 app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))

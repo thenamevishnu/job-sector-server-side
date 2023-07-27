@@ -8,6 +8,9 @@ const posts = new mongoose.Schema({
         type:mongoose.Types.ObjectId,
         required:true
     },
+    selected:{
+        type:mongoose.Types.ObjectId
+    },
     status:{
         type:Boolean,
         default:1

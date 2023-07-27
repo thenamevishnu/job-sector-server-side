@@ -3,10 +3,11 @@
 import mongoose from "mongoose"
 import { chatSchema } from "../Model/ChatModel.js"
 import { messageSchema } from "../Model/MessageModel.js"
+import { postSchema } from "../Model/postModel.js"
 
 const chat = async (req, res, next) => {
     try{
-       const {client,freelancer} = req.body
+       const {client,freelancer, post_id} = req.body
        const obj = {}
        if(!client || !freelancer){
             obj.status = false
@@ -26,6 +27,7 @@ const chat = async (req, res, next) => {
                 }
                 const createdChat = await chatSchema.create(chatObj)
                 const fullChat = await chatSchema.findOne({_id:createdChat._id}).populate("users","-profile.password")
+                await postSchema.updateOne({_id:new mongoose.Types.ObjectId(post_id)},{$set:{selected:new mongoose.Types.ObjectId(freelancer)}})
                 obj.status = false
                 obj.chat = fullChat
             }

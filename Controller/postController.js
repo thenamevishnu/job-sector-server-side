@@ -1,7 +1,7 @@
-import mongoose from "mongoose"
 import { postSchema } from "../Model/postModel.js"
 import { userSchema } from "../Model/userModel.js"
 import {prefix} from "../Trie/Trie.js"
+import mongoose from "mongoose"
 
 const postJob = async (req, res, next) => {
     try{
@@ -25,19 +25,32 @@ const searchSuggestion = async (req, res, next) => {
                     completed:false
                 }
             },{
+                $unwind:"$skillsNeed"
+            },
+            {
+                $group:{
+                    _id:null,
+                    title:{
+                        $addToSet:"$title"
+                    },
+                    skillsNeed:{
+                        $addToSet:"$skillsNeed"
+                    }
+                }
+            },
+            {
                 $project: {
-                  _id: 1,
+                  _id: 0,
                   title: 1, 
-                  description: 1, 
+                  skillsNeed: 1
                 }
             }
         ])
-        const firstArray = getAllData.map(items => items.title)
-        const secondArray = getAllData.map(items => items.description)
-        const newArray = [...firstArray,...secondArray]
+        const newArray = getAllData?.length > 0 ? [...getAllData[0]?.title,...getAllData[0]?.skillsNeed] : []
+        console.log(newArray);
         prefix.UploadArray(newArray)
         const response = prefix.searchResponse(prefixWord)
-        console.log(response);
+        // console.log(response);
         res.json({status:true,response:response})
     }catch(err){
         console.log(err)
@@ -88,6 +101,55 @@ const getPostData = async (req, res, next) => {
             }
         ])
         res.json({status:true,postInfo:postData})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const searchResult = async (req, res, next) => {
+    try{
+        const search = req.params.query
+        const postData = await postSchema.aggregate([
+            {
+                $match:{
+                    status:true,
+                    completed:false,
+                    $or:[
+                        {
+                            title:{
+                                $regex:search,$options:"i"
+                            }
+                        },{
+                            skillsNeed:{
+                                $regex:search,$options:"i"
+                            }
+                        }
+                    ]
+                }
+            },{
+                $lookup:{
+                    from:"users",
+                    localField:"user_id",
+                    foreignField:"_id",
+                    pipeline:[{
+                        $project:{
+                            _id:1,
+                            "profile.rating":1,
+                            spent:1,
+                            "profile.country":1,
+                            "profile.image":1,
+                            "profile.is_verified":1
+                        }
+                    }],
+                    as:"auther"
+                }
+            },{
+                $sort:{
+                    posted:-1
+                }
+            }
+        ])
+        res.json({status:true,response:postData})
     }catch(err){
         console.log(err)
     }
@@ -384,10 +446,6 @@ const getMyProposals = async (req, res, next) => {
                 }
             }
         ])
-
-        // const all_ids = posts.my_proposals
-        // const result = all_ids.map(item => item.post_id)
-        // const getPosts = await postSchema.find({_id:{$in:result}})
         res.json({status:true,postData:getPosts})
     }catch(err){
         console.log(err)
@@ -520,4 +578,4 @@ const getClientPost = async (req, res, next) => {
     }
 }
 
-export default {postJob, completedPost, searchSuggestion, deletePost, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}
+export default {postJob, searchResult, completedPost, searchSuggestion, deletePost, getPostData, getSinglePost, saveJobs, sendProposal, getMyPost, changePostStatus, getMyProposals, getLatest, getSaved, bestMatch, removeSaved, getClientPost, setRejectedProposal, setAcceptedProposal, updateJob}

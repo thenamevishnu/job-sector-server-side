@@ -14,6 +14,9 @@ const admins = new mongoose.Schema({
     },
     username:{
         type:String
+    },
+    payouts:{
+        type:Array
     }
 })
 

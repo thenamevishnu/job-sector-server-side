@@ -13,10 +13,12 @@ cloudinary.config({
 
 export const uploadCloud = async (image,num) => {
     const uuid = sha256(image)
-    const path = num===1 ? "../Server/Temp/ProfilePics/"+image : "../Server/Temp/Audios/"+image
-    const obj = num===1 ? {public_id:uuid} : {resource_type: "raw",public_id:uuid}
+    const path = num===1 ? "../Server/Temp/ProfilePics/"+image : num===2 ? "../Server/Temp/Audios/"+image : "../Server/Temp/Pdfs/"+image
+    const obj = num===1 ? {public_id:uuid} : num===2 ? {resource_type: "raw",public_id:uuid} : {resource_type: "raw",public_id:uuid}
     await cloudinary.v2.uploader.upload(path,obj,(err,result)=>{
-        fs.unlink("../Server/Temp/Audios/"+image,(err, response)=>{})
+        num === 1 ? fs.unlink("../Server/Temp/ProfilePics/"+image,(err, response)=>{}) :
+        num === 2 ? fs.unlink("../Server/Temp/Audios/"+image,(err, response)=>{}) : 
+        fs.unlink("../Server/Temp/Pdfs/"+image,(err, response)=>{})
     })
     return uuid
 }

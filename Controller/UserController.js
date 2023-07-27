@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken"
 import { uploadCloud } from "../Middleware/Cloudinary.js";
 import { resetLink, sendMail } from "../Mail.js";
 import mongoose from "mongoose";
+import { postSchema } from "../Model/postModel.js";
+import { adminSchema } from "../Model/AdminModel.js";
 
 const signup = async (req, res, next) => {
     try{
@@ -65,6 +67,32 @@ const signup = async (req, res, next) => {
     }
 }
 
+const deleteAccount = async (req, res, next) => {
+    try{
+        const {id, email, password} = req.body
+        const obj = {}
+        const exist = await userSchema.findOne({_id:id,"profile.email":email})
+        if(!exist){
+            obj.status = false
+            obj.message = "Something went wrong!"
+        }else{
+            const passwordCheck = await bcrypt.compare(password, exist.profile.password)
+            if(!passwordCheck){
+                obj.status = false
+                obj.message = "Invalid password!"
+            }else{
+                await userSchema.deleteOne({_id:id,"profile.email":email})
+                await postSchema.updateMany({},{$pull:{proposals:new mongoose.Types.ObjectId(id)}})
+                obj.status = true
+                obj.message = "Account Deleted"
+            }
+        }
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
 const Login = async (req, res, next) => {
     try{
         const obj = {}
@@ -93,7 +121,7 @@ const Login = async (req, res, next) => {
                     obj.status = true
                     obj.message = "Redirecting..."
                     const maxAge = 60 * 60 * 24 * 3 // 3 days
-                    const token = jwt.sign({ sub : exist._id } , process.env.jwt_key , {expiresIn:maxAge*1000})
+                    const token = jwt.sign({ sub : exist._id } , process.env.jwt_key_admin , {expiresIn:maxAge*1000})
                     obj.loggedIn = true
                     obj.token = token
                     obj.getUser = exist
@@ -112,7 +140,7 @@ const auth = async (req, res, next) => {
         const obj = {}
         const response = userStorage ? JSON.parse(userStorage) : null
         if(response){
-            const auth = jwt.verify(response.token,process.env.jwt_key)
+            const auth = jwt.verify(response.token,process.env.jwt_key_admin)
             const now = Math.floor(new Date().getTime() / 1000)
             if(auth.exp <= now){
                 obj.status = false
@@ -122,13 +150,14 @@ const auth = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err);
+        obj.status = false
+        res.json(obj)
     }
 }
 
 const getUserData = async (req, res, next) => {
     try{
-        const response = await userSchema.findOne({_id:req.body.id})
+        const response = await userSchema.findOne({_id:new mongoose.Types.ObjectId(req.body.id)})
         res.json(response)
     }catch(err){
         console.log(err)
@@ -210,6 +239,18 @@ const updateAudio = async (req, res, next) => {
         const audio = await uploadCloud(audioUrl,2)
         await userSchema.updateOne({_id:user_id},{$set:{"profile.audio":audio+".mp3"}})
         res.json({status:true,audio:audio+".mp3"})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const updatePdf = async (req, res, next) => {
+    try{
+        const {user_id} = req.body
+        const pdfUrl=req.file.filename
+        const pdf = await uploadCloud(pdfUrl,3)
+        await userSchema.updateOne({_id:user_id},{$set:{"profile.pdf":pdf+".pdf"}})
+        res.json({status:true,pdf:pdf+".pdf"})
     }catch(err){
         console.log(err)
     }
@@ -407,4 +448,175 @@ const onPaymentCompleted = async (req, res, next) => {
     }
 }
 
-export default {onPaymentCompleted, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+const postNotification = async (req, res, next) => {
+    try{
+        const {id, obj} = req.body
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(id)},{$set:{notifications:obj}})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const getUserReports = async (req, res, next) => {
+    try{
+        const userReport = await userSchema.aggregate([
+            {
+                $match:{
+                    _id:new mongoose.Types.ObjectId(req.params.user_id)
+                }
+            },{
+                $project:{
+                    _id:null,
+                    work_history:{
+                        $size:"$profile.work_history"
+                    },
+                    saved_jobs:{
+                        $size:"$saved_jobs"
+                    },
+                    rejected_jobs:{
+                        $size:"$rejected_jobs"
+                    },
+                    project_cost:1,
+                    spent:1,
+                    balance:1,
+                    proposals:{
+                        $size:"$my_proposals"
+                    },
+                    pending_proposals:{
+                        $size:{
+                            $filter:{
+                                input:"$my_proposals",
+                                as:"element",
+                                cond:{
+                                    $eq:["$$element.status","Pending"]
+                                }
+                            }
+                        }
+                    },
+                    achieved_proposals:{
+                        $size:{
+                            $filter:{
+                                input:"$my_proposals",
+                                as:"element",
+                                cond:{
+                                    $eq:["$$element.status","Achieved"]
+                                }
+                            }
+                        }
+                    },
+                    completed_proposals:{
+                        $size:{
+                            $filter:{
+                                input:"$my_proposals",
+                                as:"element",
+                                cond:{
+                                    $eq:["$$element.status","Completed"]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ])
+        
+        const sumByMonth = userReport[0]?.project_cost?.reduce((result, obj) => {
+        const { amount, month: month } = obj;
+        
+        if (!result[month]) {
+            result[month] = 0;
+        }
+        
+        result[month] += amount;
+        return result;
+        }, {});
+        userReport[0].project_cost = sumByMonth ? Object.entries(sumByMonth).map(([month,cost]) => ({month,cost})) : [0]
+        res.json({status:true,reports:userReport})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const getClientReport = async (req, res, next) => {
+    try{
+        const posts = await postSchema.aggregate([
+            {
+                $match:{
+                    user_id:new mongoose.Types.ObjectId(req.params.user_id)
+                }
+            }
+        ])
+        const user = await userSchema.aggregate([
+            {
+                $match:{
+                    _id:new mongoose.Types.ObjectId(req.params.user_id)
+                }
+            },{
+                $project:{
+                    _id:0,
+                    spent:1,
+                    project_cost:1
+                }
+            }
+        ])
+        const obj = {}
+        obj.total_post = posts ? posts.length : 0
+        const enabled = posts.filter(obj => obj.status === true)
+        console.log(enabled);
+        obj.enabled = enabled ? enabled.length : 0
+        const disabled = posts.filter(obj => obj.status === false)
+        obj.disabled = disabled ? disabled.length : 0
+        const completed = posts.filter(obj => obj.completed === true)
+        obj.completed = completed ? completed.length : 0
+
+        const sumByMonth = user[0]?.project_cost?.reduce((result, obj) => {
+        const { amount, month: month } = obj;
+        
+        if (!result[month]) {
+            result[month] = 0;
+        }
+        
+        result[month] += amount;
+        return result;
+        }, {});
+        user[0].project_cost = sumByMonth ? Object.entries(sumByMonth).map(([month,cost]) => ({month,cost})) : [0]
+        obj.spent = user ? user[0]?.spent : 0
+        obj.project_cost = user ? user[0]?.project_cost : [0]
+        res.json({status:true,reports:obj})    
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const changeTwoStep = async (req, res, next) => {
+    try{
+        const {id, status} = req.body
+        console.log(req.body);
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(id)},{$set:{twoStep:status}})
+        res.json({status:true})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const withdraw = async (req, res, next) => {
+    try{
+        const {id,to} = req.body
+        const times = new Date()
+        const timeNow = Math.floor(times.getTime()/1000)
+        const obj  = {
+            amount : 100,
+            status : "Pending",
+            currency : "USD",
+            time : times,
+        }
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(id)},{$push:{transactions:obj},$set:{cooldown:timeNow + 86400},$inc:{balance:-100}})
+        obj.user_id = id
+        obj.to = to
+        await adminSchema.updateMany({},{$push:{payouts:obj}})
+        res.json({status:true,cooldown:timeNow+86400})
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default {onPaymentCompleted, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}

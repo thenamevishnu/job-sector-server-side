@@ -1,7 +1,7 @@
 import express from "express"
 const router = express.Router()
 import UserController from "../Controller/UserController.js"
-import { upload, uploadAudio } from "../Middleware/Multer.js"
+import { upload, uploadAudio, uploadPdf } from "../Middleware/Multer.js"
 import postController from "../Controller/postController.js"
 import chatController from "../Controller/chatController.js"
 
@@ -12,6 +12,7 @@ router.post("/getUserData",UserController.getUserData)
 router.get("/getUserDataByEmail/:email",UserController.getUserDataByEmail)
 router.post("/update-profile-pic",upload.single("image"),UserController.updatePic)
 router.post("/update-profile-audio",uploadAudio.single("audio"),UserController.updateAudio)
+router.post("/update-profile-pdf",uploadPdf.single("pdf"),UserController.updatePdf)
 router.post("/changeProfileData",UserController.updateProfile)
 router.post("/resetPassword/:email",UserController.resetPassword)
 
@@ -50,4 +51,16 @@ router.post("/addPaymentMethod",UserController.addPaymentMethod)
 router.post("/onPaymentCompleted",UserController.onPaymentCompleted)
 
 router.get("/getSearchResult/:query",postController.searchSuggestion)
+router.get("/search/:query",postController.searchResult)
+
+router.post("/postNotification",UserController.postNotification)
+router.post("/deleteAccount",UserController.deleteAccount)
+
+router.get("/getUserReports/:user_id",UserController.getUserReports)
+router.get("/getClientReport/:user_id",UserController.getClientReport)
+
+router.post("/changeTwoStep",UserController.changeTwoStep)
+
+router.post("/withdraw",UserController.withdraw)
+
 export default router

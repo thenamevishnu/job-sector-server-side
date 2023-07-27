@@ -24,5 +24,15 @@ const storage2 = multer.diskStorage({
     }
 })
 
+const storage3 = multer.diskStorage({
+    destination:function(req,file,cb){
+        cb(null, path.join(directoryPath,"/../Temp/Pdfs"))
+    },
+    filename:function(req,file,cb){
+        cb(null,Date.now()+'-'+file.originalname)
+    }
+})
+
 export const upload = multer({storage:storage})
 export const uploadAudio = multer({storage:storage2})
+export const uploadPdf = multer({storage:storage3})
