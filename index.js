@@ -53,7 +53,7 @@ io.on("connection",(socket)=>{
     })
 
     socket.on("sendMessageToPeer",(data) =>{
-        socket.to(data.user_id).emit("receivedPeerToPeer",data)
+        socket.to(data.room_id).emit("receivedPeerToPeer",data)
     })
 })
 

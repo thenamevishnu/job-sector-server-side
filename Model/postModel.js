@@ -27,25 +27,21 @@ const posts = new mongoose.Schema({
         type:String,
         required:true
     },
-    priceRange:{
-        from:{
-            type:Number,
-            required:true
-        },
-        to:{
-            type:Number,
-            required:true
-        }
+    priceRangefrom:{
+        type:Number,
+        required:true
     },
-    connectionsNeed:{
-        from:{
-            type:Number,
-            required:true
-        },
-        to:{
-            type:Number,
-            required:true
-        }
+    priceRangeto:{
+        type:Number,
+        required:true
+    },
+    connectionsNeedfrom:{
+        type:Number,
+        required:true
+    },
+    connectionsNeedto:{
+        type:Number,
+        required:true
     },
     description:{
         type:String,

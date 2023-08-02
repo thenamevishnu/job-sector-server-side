@@ -9,6 +9,9 @@ const user = new mongoose.Schema({
         default:0
     },
     profile:{
+        experience:{
+            type:String
+        },
         full_name:{
             type:String,
             required:true

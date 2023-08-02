@@ -352,4 +352,47 @@ const payoutManageAdmin = async (req, res, next) => {
     }
 }
 
-export default { Login, auth, getAllUsers,payoutManageAdmin, getAdminData, updateBanStatus, fetchSearchData, updateTickStatus,getAllPost, fetchSearchPostData }
+const getDashboard = async (req, res, next) => {
+    try{
+        const obj = {}
+        const userData = await userSchema.find()
+        const postData = await postSchema.find()
+        const adminData = await adminSchema.findOne({_id:new mongoose.Types.ObjectId(req.params.id)})
+        obj.TotalUsers = userData.length
+        obj.Experts = userData.reduce((count, user)=>count + (user.profile.experience === "Experts" ? 1 : 0) , 0)
+        obj.Intermediate = userData.reduce((count, user)=>count + (user.profile.experience === "Intermediate" ? 1 : 0) , 0)
+        obj.Entry = userData.reduce((count, user)=>count + (user.profile.experience === "Entry Level" ? 1 : 0) , 0)
+        obj.Verified = userData.reduce((count, user)=>count + (user.profile.is_verified ? 1 : 0) , 0)
+        obj.TotalPosts = postData.length
+        obj.Completed = postData.reduce((count, post)=>count + (post.completed ? 1 : 0) , 0)
+        obj.NotCompleted = postData.reduce((count, post)=>count + (post.completed ? 0 : 1) , 0)
+        obj.Enabled = postData.reduce((count, post)=>count + (post.status ? 1 : 0) , 0)
+        obj.Disabled = postData.reduce((count, post)=>count + (post.status ? 0 : 1) , 0)
+        obj.ClientSpent = userData.reduce((spent, user) => spent + (user.profile.account_type === "client" ? user.spent : 0), 0)
+        obj.FreelancerBalance = userData.reduce((spent, user) => spent + (user.profile.account_type === "freelancer" ? user.balance : 0) ,0)
+        obj.Clients = userData.reduce((count, user) => count + (user.profile.account_type === "client" ? 1 : 0), 0)
+        obj.Freelancers = userData.reduce((count, user) => count + (user.profile.account_type === "freelancer" ? 1 : 0), 0)
+        obj.Profit = adminData.profit ?? 0
+        
+        const array1 = adminData.profitData.month
+        const array2 = adminData.profitData.amount
+    
+        const result = array2.reduce((acc, value, index) => {
+        const key = array1[index];
+        acc[key] = (acc[key] || 0) + value;
+        return acc;
+        }, {});
+
+        const lastOut = Object.keys(result).reduce((acc, key) => {
+        acc.push({ month: key, amount: result[key] });
+        return acc;
+        }, []);
+        obj.profitData = lastOut
+        console.log(obj);
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default { Login, auth, getDashboard, getAllUsers,payoutManageAdmin, getAdminData, updateBanStatus, fetchSearchData, updateTickStatus,getAllPost, fetchSearchPostData }

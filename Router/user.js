@@ -51,7 +51,7 @@ router.post("/addPaymentMethod",UserController.addPaymentMethod)
 router.post("/onPaymentCompleted",UserController.onPaymentCompleted)
 
 router.get("/getSearchResult/:query",postController.searchSuggestion)
-router.get("/search/:query",postController.searchResult)
+router.post("/search",postController.searchResult)
 
 router.post("/postNotification",UserController.postNotification)
 router.post("/deleteAccount",UserController.deleteAccount)

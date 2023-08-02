@@ -50,7 +50,6 @@ const searchSuggestion = async (req, res, next) => {
         console.log(newArray);
         prefix.UploadArray(newArray)
         const response = prefix.searchResponse(prefixWord)
-        // console.log(response);
         res.json({status:true,response:response})
     }catch(err){
         console.log(err)
@@ -108,24 +107,126 @@ const getPostData = async (req, res, next) => {
 
 const searchResult = async (req, res, next) => {
     try{
-        const search = req.params.query
-        const postData = await postSchema.aggregate([
-            {
-                $match:{
-                    status:true,
-                    completed:false,
-                    $or:[
+        const search = req.body.search
+        const filters = req.body.filterData ?? {}
+        console.log(filters);
+        const experience = filters?.experience == "" ? null : filters?.experience
+        const proposals = filters?.proposals == "" ? null : filters?.proposals?.toString()
+        const connections = filters?.connections == "" ? null : filters?.connections?.toString()
+        const jobType = filters?.jobType == "" ? null : filters?.jobType
+        const sort = filters?.sort == "" ? null : filters?.sort
+        console.log(sort);
+        let matchObj = {
+            status:true,
+            completed:false,
+            $or:[
+                {
+                    title:{
+                        $regex:search,$options:"i"
+                    }
+                },{
+                    skillsNeed:{
+                        $regex:search,$options:"i"
+                    }
+                }
+            ]
+        }
+        if(proposals!=null){
+            let [start, end] = proposals.split(" - ")
+            start = parseInt(start)
+            end = parseInt(end)
+            matchObj = {
+                status:true,
+                completed:false,
+                $or:[
+                    {
+                        title:{
+                            $regex:search,$options:"i"
+                        }
+                    },{
+                        skillsNeed:{
+                            $regex:search,$options:"i"
+                        }
+                    }
+                ],
+                $expr:{
+                    $and:[
                         {
-                            title:{
-                                $regex:search,$options:"i"
-                            }
+                            $gte:[{$size:"$proposals"},start]
                         },{
-                            skillsNeed:{
-                                $regex:search,$options:"i"
-                            }
+                            $lte:[{$size:"$proposals"},end]
                         }
                     ]
                 }
+            }
+        } 
+        if(connections!=null){
+            let [start, end] = connections.split(" - ")
+            matchObj.connectionsNeedfrom = parseInt(start)
+            matchObj.connectionsNeedto = parseInt(end)
+        } 
+        if(experience!=null) matchObj.experience = {$in:experience?.split(",")} 
+        if(jobType!=null) matchObj.jobType = {$in:jobType?.split(",")}
+        if(experience!=null) matchObj.experience = {$in:experience?.split(",")} 
+        let sorting = {
+            $sort:{
+                posted: -1
+            }
+        }
+        if(sort != null){
+            if(sort == "latest"){
+                sorting = {
+                    $sort:{
+                        posted:-1
+                    }
+                }
+            }
+            if(sort == "oldest"){
+                sorting = {
+                    $sort:{
+                        posted:1
+                    }
+                }
+            }
+            if(sort == "proposalsLow"){
+                sorting = {
+                    $sort:{
+                        proposalSize: 1
+                    }
+                }
+            }
+            if(sort == "proposalsHigh"){
+                sorting = {
+                    $sort:{
+                        proposalSize: 1
+                    }
+                }
+            }
+            if(sort == "connectionsLow"){
+                sorting = {
+                    $sort:{
+                        connectionsNeedfrom: 1
+                    }
+                }
+            }
+            if(sort == "connectionsHigh"){
+                sorting = {
+                    $sort:{
+                        connectionsNeedfrom: -1
+                    }
+                }
+            }
+        }
+       console.log(matchObj, sorting);
+        const postData = await postSchema.aggregate([{
+                $addFields:{
+                    proposalSize:{
+                        $size:"$proposals"
+                    }
+                }
+            },
+            {
+                $match:matchObj
             },{
                 $lookup:{
                     from:"users",
@@ -143,12 +244,9 @@ const searchResult = async (req, res, next) => {
                     }],
                     as:"auther"
                 }
-            },{
-                $sort:{
-                    posted:-1
-                }
-            }
+            },sorting
         ])
+        
         res.json({status:true,response:postData})
     }catch(err){
         console.log(err)
