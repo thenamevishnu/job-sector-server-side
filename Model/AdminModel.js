@@ -22,14 +22,16 @@ const admins = new mongoose.Schema({
         type:Number,
         default:0
     },
-    profitData:{
-        amount:{
-            type:Number
-        },
-        month:{
-            type:String
+    profitData:[
+        {
+            amount:{
+                type:Number
+            },
+            month:{
+                type:String
+            }
         }
-    }
+    ]
 })
 
 export const adminSchema = mongoose.model("admins",admins)

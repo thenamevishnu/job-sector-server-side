@@ -62,5 +62,8 @@ router.get("/getClientReport/:user_id",UserController.getClientReport)
 router.post("/changeTwoStep",UserController.changeTwoStep)
 
 router.post("/withdraw",UserController.withdraw)
+router.post("/changePassword",UserController.changePassword)
+
+router.post("/contact",UserController.contact)
 
 export default router

@@ -2,7 +2,7 @@ import { userSchema } from "../Model/userModel.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { uploadCloud } from "../Middleware/Cloudinary.js";
-import { resetLink, sendMail } from "../Mail.js";
+import { resetLink, sendBroadcast, sendMail } from "../Mail.js";
 import mongoose from "mongoose";
 import { postSchema } from "../Model/postModel.js";
 import { adminSchema } from "../Model/AdminModel.js";
@@ -619,4 +619,42 @@ const withdraw = async (req, res, next) => {
     }
 }
 
-export default {onPaymentCompleted, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+const changePassword = async (req, res, next) => {
+    try{
+        const {user_id, password} = req.body
+        const obj = {}
+        const userData = await userSchema.findOne({_id:user_id})
+        const passwordCheck = await bcrypt.compare(password.oldPassword, userData.profile.password)
+        if(!passwordCheck){
+            obj.status = false
+            obj.message = "Invalid current password!"
+        }else{
+            const passwordCheck = await bcrypt.compare(password.newPassword, userData.profile.password)
+            if(passwordCheck){
+                obj.status = false
+                obj.message = "New password same as current!"
+            }else{
+                const hash = await bcrypt.hash(password.newPassword,10)
+                await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user_id)},{$set:{"profile.password":hash}});
+                obj.status = true
+                obj.message = "Password Updated!"
+            }
+        }
+        res.json(obj)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const contact = async (req, res, next) => {
+    try{
+        const {email, id, name, subject, message} = req.body.userData
+        console.log(req.body);
+        const text = `Name: ${name}<br>UserID: ${id}<br>Email: ${email}<br><br>message: ${message}`
+        await sendBroadcast(process.env.email, subject, text)
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default {onPaymentCompleted, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}

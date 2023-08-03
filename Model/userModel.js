@@ -172,7 +172,22 @@ const user = new mongoose.Schema({
         default:[]
     },
     notifications:{
-        type:Object
+        promotional:{
+            type:Boolean,
+            default:true
+        },
+        broadcast:{
+            type:Boolean,
+            default:true
+        },
+        account:{
+            type:Boolean,
+            default:true
+        },
+        proposals:{
+            type:Boolean,
+            default:true
+        }
     },
     banned:{
         type:Boolean,
@@ -182,8 +197,7 @@ const user = new mongoose.Schema({
         {
             amount:{
                 type:Number
-            }
-        },{
+            },
             month:{
                 type:String
             }

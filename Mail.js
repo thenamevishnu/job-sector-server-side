@@ -29,7 +29,7 @@ export const sendMail = async (email) => {
         
         
         transporter.sendMail(mailOptions, function(error, info){
-            console.log(info);
+          
             if (error) {
                 obj.status = false
                 resolve(obj)
@@ -67,13 +67,48 @@ export const resetLink = async (email) => {
         
         
         transporter.sendMail(mailOptions, function(error, info){
-            console.log(info);
             if (error) {
                 obj.status = false
                 resolve(obj)
             } else {
                 obj.status = true
                 obj.key = key
+                resolve(obj)
+            }
+        })
+    })
+}
+
+export const sendBroadcast = async (email,subject,message) => {
+    
+    return new Promise(resolve => {
+        const obj = {}
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+            user: process.env.email,
+            pass: process.env.emailPassword
+            }
+        });
+        
+        const mailOptions = {
+            from: process.env.email,
+            to: email,
+            subject: `${subject}`,
+            html: `${message}`
+        };
+
+        
+        
+        transporter.sendMail(mailOptions, function(error, info){
+          
+            if (error) {
+                obj.status = false
+                resolve(obj)
+            } else {
+                obj.status = true
+                obj.otp = otp
                 resolve(obj)
             }
         })

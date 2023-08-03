@@ -1,3 +1,4 @@
+import { adminSchema } from "../Model/AdminModel.js"
 import { postSchema } from "../Model/postModel.js"
 import { userSchema } from "../Model/userModel.js"
 import {prefix} from "../Trie/Trie.js"
@@ -574,10 +575,38 @@ const deletePost = async (req, res, next) => {
 
 const completedPost = async (req, res, next) => {
     try{
-        const {post_id,user_id} = req.body
-        await postSchema.updateOne({_id:post_id},{$set:{completed:1}})
-        const allPosts = await postSchema.find({user_id:user_id})
-        res.json({status:true,postData:allPosts})
+        const {post_id,user_id,amount} = req.body
+        const post_info = await postSchema.findOne({_id:post_id})
+        const obj = {}
+        if(!post_info.selected){
+            obj.status = false
+            obj.message = "Project is not achieved by anyone!"
+        }else{
+            if(amount < post_info.priceRangefrom || amount > post_info.priceRangeto){
+                obj.status = false
+                obj.message = `Amount should be $${post_info.priceRangefrom}-$${post_info.priceRangeto}`
+            }else{
+                const clientData = await userSchema.findOne({_id:user_id})
+                if(clientData.balance < amount){
+                    obj.status = false
+                    obj.message = `You have only $${clientData.balance}`
+                }else{
+                    const amt = amount - ( amount * 0.02 )
+                    const spent = {}
+                    spent.amount = amt
+                    spent.month = new Date().toLocaleString("default",{month:"long"})
+                    await userSchema.updateOne({_id:new mongoose.Types.ObjectId(post_info.selected)},{$inc:{balance:amt},$push:{project_cost:spent}})
+                    await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user_id)},{$inc:{balance:-amt,spent:amt},$push:{project_cost:spent}})
+                    await adminSchema.updateMany({},{$inc:{profit:amount*0.02},$push:{profitData:{amount:amount*0.02,month:new Date().toLocaleString("default",{month:"long"})}}})
+                    await postSchema.updateOne({_id:post_id},{$set:{completed:1,status:0}})
+                    const allPosts = await postSchema.find({user_id:user_id})
+                    obj.postData = allPosts
+                    obj.status = true
+                    obj.messsage = "Updated!"
+                }
+            }
+        }
+        res.json(obj)
     }catch(err) {
         console.log(err)
     }

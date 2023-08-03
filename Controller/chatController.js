@@ -27,10 +27,10 @@ const chat = async (req, res, next) => {
                 }
                 const createdChat = await chatSchema.create(chatObj)
                 const fullChat = await chatSchema.findOne({_id:createdChat._id}).populate("users","-profile.password")
-                await postSchema.updateOne({_id:new mongoose.Types.ObjectId(post_id)},{$set:{selected:new mongoose.Types.ObjectId(freelancer)}})
                 obj.status = false
                 obj.chat = fullChat
             }
+            await postSchema.updateOne({_id:new mongoose.Types.ObjectId(post_id)},{$set:{selected:new mongoose.Types.ObjectId(freelancer)}})
             res.json(obj)
        }  
     }catch(err){    

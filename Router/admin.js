@@ -13,5 +13,6 @@ router.get("/getAllPost",adminController.getAllPost)
 router.get("/getAdminData/:user_id",adminController.getAdminData)
 router.post("/payoutManageAdmin",adminController.payoutManageAdmin)
 router.get("/getDashboard/:id",adminController.getDashboard)
+router.post("/sendNotification",adminController.sendNotification)
 
 export default router

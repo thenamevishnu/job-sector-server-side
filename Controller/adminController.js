@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken"
 import { userSchema } from "../Model/userModel.js"
 import mongoose from "mongoose"
 import { postSchema } from "../Model/postModel.js";
+import { sendBroadcast } from "../Mail.js";
 
 function isRegexValid(regexPattern) {
     try {
@@ -374,25 +375,37 @@ const getDashboard = async (req, res, next) => {
         obj.Freelancers = userData.reduce((count, user) => count + (user.profile.account_type === "freelancer" ? 1 : 0), 0)
         obj.Profit = adminData.profit ?? 0
         
-        const array1 = adminData.profitData.month
-        const array2 = adminData.profitData.amount
-    
-        const result = array2.reduce((acc, value, index) => {
-        const key = array1[index];
-        acc[key] = (acc[key] || 0) + value;
-        return acc;
-        }, {});
+        const sumByMonth = adminData.profitData.reduce((result, obj) => {
+            const { amount, month: month } = obj;
+            
+            if (!result[month]) {
+                result[month] = 0;
+            }
+            
+            result[month] += amount;
+            return result;
+            }, {});
 
-        const lastOut = Object.keys(result).reduce((acc, key) => {
-        acc.push({ month: key, amount: result[key] });
-        return acc;
-        }, []);
-        obj.profitData = lastOut
-        console.log(obj);
+        obj.profitData = sumByMonth ? Object.entries(sumByMonth).map(([month,amount]) => ({month,amount})) : [0]
         res.json(obj)
     }catch(err){
         console.log(err)
     }
 }
 
-export default { Login, auth, getDashboard, getAllUsers,payoutManageAdmin, getAdminData, updateBanStatus, fetchSearchData, updateTickStatus,getAllPost, fetchSearchPostData }
+const sendNotification = async (req, res, next) => {
+    try{
+        const {type, message} = req.body
+        const subject = type == "promotional" ? "Promotional Message" : type == "broadcast" ? "Broadcast Message" : "Account Related"
+        const findUsers = await userSchema.find()
+        findUsers.forEach(async (user) => {
+            if(user.notifications){
+                await sendBroadcast(user.profile.email, subject, message)
+            }
+        })
+    }catch(err){
+        console.log(err)
+    }
+}
+
+export default { Login, auth, getDashboard, sendNotification, getAllUsers,payoutManageAdmin, getAdminData, updateBanStatus, fetchSearchData, updateTickStatus,getAllPost, fetchSearchPostData }
