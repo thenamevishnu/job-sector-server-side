@@ -6,6 +6,8 @@ import { resetLink, sendBroadcast, sendMail } from "../Mail.js";
 import mongoose from "mongoose";
 import { postSchema } from "../Model/postModel.js";
 import { adminSchema } from "../Model/AdminModel.js";
+import NodeCache from "node-cache";
+const myCache = new NodeCache( { stdTTL: 100, checkperiod: 300 } );
 
 const signup = async (req, res, next) => {
     try{
@@ -29,14 +31,15 @@ const signup = async (req, res, next) => {
                             obj.message = "Otp sent to "+userData.email
                             obj.status = "sent"
                             obj.otp = response.otp
-                            req.session.otp = response.otp
+                            myCache.set("otp",response.otp)
                         }else{
                             obj.status="error"
                             obj.message="Error happend!"
                         }
                     }else{
-                        console.log(req.session, userData.otp);
-                        if(userData.otp.length != req?.session?.otp?.toString()?.length || parseInt(userData.otp) != req.session.otp){
+                        const StoredOtp = myCache.get("otp")
+                        console.log(StoredOtp, userData.otp);
+                        if(userData.otp.length != StoredOtp?.toString()?.length || parseInt(userData.otp) != StoredOtp){
                             obj.status = "invalid"
                             obj.message = "Invalid otp!"
                         }else{
