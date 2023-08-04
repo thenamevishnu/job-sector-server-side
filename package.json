@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "node ./index.js"
+    "start": "node ./index.js",
+    "build": "echo \"No build steps required for this project\""
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
