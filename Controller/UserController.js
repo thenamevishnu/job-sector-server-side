@@ -35,7 +35,7 @@ const signup = async (req, res, next) => {
                             obj.message="Error happend!"
                         }
                     }else{
-                        console.log(req.session.otp, userData.otp);
+                        console.log(req.session, userData.otp);
                         if(userData.otp.length != req?.session?.otp?.toString()?.length || parseInt(userData.otp) != req.session.otp){
                             obj.status = "invalid"
                             obj.message = "Invalid otp!"
