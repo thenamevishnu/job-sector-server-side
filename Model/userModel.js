@@ -206,7 +206,7 @@ const user = new mongoose.Schema({
     ],
     cooldown:{
         type:Number,
-        default:new Date()
+        default:Math.floor(new Date()/1000)
     }
 })
 

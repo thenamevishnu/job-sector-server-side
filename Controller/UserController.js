@@ -35,8 +35,7 @@ const signup = async (req, res, next) => {
                             obj.message="Error happend!"
                         }
                     }else{
-                        console.log(userData.otp, req.session.otp)
-                        if(isNaN(userData.otp) || parseInt(userData.otp) !== req.session.otp){
+                        if(userData.otp.length != req?.session?.otp?.toString()?.length || parseInt(userData.otp) != req.session.otp){
                             obj.status = "invalid"
                             obj.message = "Invalid otp!"
                         }else{
@@ -47,8 +46,7 @@ const signup = async (req, res, next) => {
                             await userSchema.insertMany([json])
                             obj.status = true
                             obj.message = "Registration Successful!"   
-                        }
-                        
+                        }   
                     }
                 }else{
                     const json = {
