@@ -55,6 +55,12 @@ io.on("connection",(socket)=>{
     socket.on("sendMessageToPeer",(data) =>{
         socket.to(data.room_id).emit("receivedPeerToPeer",data)
     })
+
+    socket.on("call-end",(room_id)=>socket.to(room_id).emit("call-end",room_id))
+
+    // socket.on("calling",(room_id) => socket.to(room_id).emit("calling",room_id))
+
+    // socket.on("pickup",(room_id)=>socket.to(room_id).emit("pickup",room_id))
 })
 
 app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))

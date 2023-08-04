@@ -118,13 +118,22 @@ const Login = async (req, res, next) => {
                     obj.status = false
                     obj.message = "Invalid login credentials!"
                 }else{
-                    obj.status = true
-                    obj.message = "Redirecting..."
-                    const maxAge = 60 * 60 * 24 * 3 // 3 days
-                    const token = jwt.sign({ sub : exist._id } , process.env.jwt_key_admin , {expiresIn:maxAge*1000})
-                    obj.loggedIn = true
-                    obj.token = token
-                    obj.getUser = exist
+                    if(exist.banned){
+                        obj.status = false
+                        obj.message = "You're banned recently!"
+                    }else{
+                        if(exist.twoStep && exist.profile.signup_method != "google"){
+                            const response = await sendMail(userData.email,"Two Step Verification!")
+                            obj.sentOtp = response.otp
+                        }
+                        obj.status = true
+                        obj.message = "Redirecting..."
+                        const maxAge = 60 * 60 * 24 * 3 // 3 days
+                        const token = jwt.sign({ sub : exist._id } , process.env.jwt_key_admin , {expiresIn:maxAge*1000})
+                        obj.loggedIn = true
+                        obj.token = token
+                        obj.getUser = exist
+                    }
                 }
             }
         }

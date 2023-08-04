@@ -10,7 +10,8 @@ const user = new mongoose.Schema({
     },
     profile:{
         experience:{
-            type:String
+            type:String,
+            default:"Entry Level"
         },
         full_name:{
             type:String,

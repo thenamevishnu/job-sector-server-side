@@ -4,7 +4,7 @@ import sha256 from "sha256"
 
 dotenv.config()
 
-export const sendMail = async (email) => {
+export const sendMail = async (email,subject="Email verification") => {
     
     return new Promise(resolve => {
         const obj = {}
@@ -22,7 +22,7 @@ export const sendMail = async (email) => {
         const mailOptions = {
             from: process.env.email,
             to: email,
-            subject: "Email verification",
+            subject: subject,
             html: `Otp is ${otp}`
         };
 

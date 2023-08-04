@@ -450,15 +450,21 @@ const setAcceptedProposal = async (req, res, next) => {
     try{
         const obj = {}
         const {post_id,user_id} = req.body
-        const done = await userSchema.findOne({_id:user_id,my_proposals:{$elemMatch:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
-        if(done){
+        const available = await userSchema.findOne({_id:user_id})
+        if(!available.profile.available){
             obj.status = false
-            obj.message = "Proposal Already Accepted!"
+            obj.message = "User is not available!"
         }else{
-            await userSchema.updateOne({_id:user_id},{$pull:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}})
-            await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
-            obj.status = true
-            obj.message = "Proposal Accepted!"
+            const done = await userSchema.findOne({_id:user_id,my_proposals:{$elemMatch:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
+            if(done){
+                obj.status = false
+                obj.message = "Proposal Already Accepted!"
+            }else{
+                await userSchema.updateOne({_id:user_id},{$pull:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}})
+                await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Achieved"}}})
+                obj.status = true
+                obj.message = "Proposal Accepted!"
+            }
         }
         const postData = await postSchema.findOne({_id:post_id})
         const userData = await userSchema.find({_id:{$in:postData.proposals}})
@@ -476,29 +482,40 @@ const sendProposal = async (req, res, next) => {
         const userData = await userSchema.findOne({_id:user_id})
         const postData = await postSchema.findOne({_id:post_id})
         const response = await userSchema.findOne({_id:user_id,rejected_jobs:new mongoose.Types.ObjectId(post_id)})
-        if(response){
+        const levels = {
+            "Entry Level":["Entry Level"],
+            "Intermediate":["Enter Level","Intermediate"],
+            "Expert":["Entry Level","Intermediate","Expert"]
+        }
+        console.log(userData.profile.experience, postData.experience);
+        if(!(levels[userData.profile.experience].includes(postData.experience))){
             obj.status = false
-            obj.message = "Can't send, because you're rejected before!"
+            obj.message = "You need level: "+postData.experience+""
         }else{
-            if(userData?.profile?.connections?.count < postData?.connectionsNeed?.from){
+            if(response){
                 obj.status = false
-                obj.warn = "warn"
-                obj.message = `Need atleast ${postData?.connectionsNeed?.from} connections!`
+                obj.message = "Can't send, because you're rejected before!"
             }else{
-                const response = await userSchema.findOne({_id:user_id,"my_proposals.post_id":new mongoose.Types.ObjectId(post_id)})
-                if(!response){
-                    const response1 = await postSchema.updateOne({_id:post_id},{$push:{proposals:new mongoose.Types.ObjectId(user_id)}})
-                    const response2 = await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}}) 
-                    if(response1.modifiedCount === 1 && response2.modifiedCount === 1){
-                        obj.status = true
-                        obj.message = "Proposal sent!"
+                if(userData?.profile?.connections?.count < postData?.connectionsNeedfrom){
+                    obj.status = false
+                    obj.warn = "warn"
+                    obj.message = `Need atleast ${postData?.connectionsNeedfrom} connections!`
+                }else{
+                    const response = await userSchema.findOne({_id:user_id,"my_proposals.post_id":new mongoose.Types.ObjectId(post_id)})
+                    if(!response){
+                        const response1 = await postSchema.updateOne({_id:post_id},{$push:{proposals:new mongoose.Types.ObjectId(user_id)}})
+                        const response2 = await userSchema.updateOne({_id:user_id},{$push:{my_proposals:{post_id:new mongoose.Types.ObjectId(post_id),status:"Pending"}}}) 
+                        if(response1.modifiedCount === 1 && response2.modifiedCount === 1){
+                            obj.status = true
+                            obj.message = "Proposal sent!"
+                        }else{
+                            obj.status = false
+                            obj.message = "Something error happend!"
+                        }
                     }else{
                         obj.status = false
-                        obj.message = "Something error happend!"
+                        obj.message = "Proposal already sent!"
                     }
-                }else{
-                    obj.status = false
-                    obj.message = "Proposal already sent!"
                 }
             }
         }
