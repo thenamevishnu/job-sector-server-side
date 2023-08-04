@@ -165,8 +165,7 @@ const user = new mongoose.Schema({
         }
     }],
     withdrawal_methods:{
-        type:Object,
-        default:null
+        type:Object
     },
     my_proposals:{
         type:Array,
