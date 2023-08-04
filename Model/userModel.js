@@ -166,7 +166,9 @@ const user = new mongoose.Schema({
     }],
     withdrawal_methods:{
         Paypal:{
-            type:String
+            to:{
+                type:String
+            }
         }
     },
     my_proposals:{
