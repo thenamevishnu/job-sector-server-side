@@ -38,8 +38,9 @@ io.on("connection",(socket)=>{
         const chat = messageData.chat_id
         if(!chat.users){ console.log("not defined!"); return}
         chat.users.forEach(user => {
-            if(user._id === messageData.sender._id) return
-            socket.in(user._id).emit("receive_message",messageData)
+            if(user._id != messageData.sender._id){
+                 socket.in(user._id).emit("receive_message",messageData)
+            }
         })
     })
 
