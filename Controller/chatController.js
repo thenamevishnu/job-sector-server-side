@@ -81,8 +81,10 @@ const getAllMessages = async (req, res, next) => {
 const unreadMessage = async (req, res, next) => {
     try{
         const {receiver,chat, setZero} = req.body
+        console.log(receiver, chat, setZero);
         const findChat = await chatSchema.findOne({_id:new mongoose.Types.ObjectId(chat)})
-        const setValue = setZero ? 0 : findChat?.[receiver] + 1
+        let setValue = setZero ? 0 : ((!findChat?.[receiver]) || isNaN(findChat?.[receiver])) ? 0 + 1 : findChat?.[receiver] + 1
+        console.log(setValue);
         const setNow = setZero ? false : true 
         console.log(await chatSchema.updateOne({_id:new mongoose.Types.ObjectId(chat)},{$set:{[receiver]:setValue}},{timestamps:setNow}))
         res.json({status:true,unread:setValue})
