@@ -13,7 +13,7 @@ import morgan from "morgan"
 dotenv.config()
 
 const app=express()
-app.use(morgan)
+app.use(morgan("dev"))
 
 const server = app.listen(3001,()=>{
     console.log("connected 3001");
