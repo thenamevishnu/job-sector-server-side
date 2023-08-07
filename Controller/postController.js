@@ -9,10 +9,9 @@ const postJob = async (req, res, next) => {
         const {postData} = req.body
         postData.posted = new Date().getTime()
         const data = await postSchema.insertMany([postData])
-        console.log(data);
         res.json({status:true})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -48,12 +47,11 @@ const searchSuggestion = async (req, res, next) => {
             }
         ])
         const newArray = getAllData?.length > 0 ? [...getAllData[0]?.title,...getAllData[0]?.skillsNeed] : []
-        console.log(newArray);
         prefix.UploadArray(newArray)
         const response = prefix.searchResponse(prefixWord)
         res.json({status:true,response:response})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -62,10 +60,9 @@ const updateJob = async (req, res, next) => {
         const {postData} = req.body
         const {post_id,user_id,...rest} = postData
         const data = await postSchema.updateOne({_id:new mongoose.Types.ObjectId(postData.post_id)},{$set:rest})
-        console.log(data);
         res.json({status:true})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -102,7 +99,7 @@ const getPostData = async (req, res, next) => {
         ])
         res.json({status:true,postInfo:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -110,13 +107,11 @@ const searchResult = async (req, res, next) => {
     try{
         const search = req.body.search
         const filters = req.body.filterData ?? {}
-        console.log(filters);
         const experience = filters?.experience == "" ? null : filters?.experience
         const proposals = filters?.proposals == "" ? null : filters?.proposals?.toString()
         const connections = filters?.connections == "" ? null : filters?.connections?.toString()
         const jobType = filters?.jobType == "" ? null : filters?.jobType
         const sort = filters?.sort == "" ? null : filters?.sort
-        console.log(sort);
         let matchObj = {
             status:true,
             completed:false,
@@ -218,7 +213,6 @@ const searchResult = async (req, res, next) => {
                 }
             }
         }
-       console.log(matchObj, sorting);
         const postData = await postSchema.aggregate([{
                 $addFields:{
                     proposalSize:{
@@ -250,7 +244,7 @@ const searchResult = async (req, res, next) => {
         
         res.json({status:true,response:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -289,7 +283,7 @@ const getLatest = async (req, res, next) => {
         ])
         res.json({status:true,postData:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 } 
 
@@ -328,7 +322,7 @@ const getSaved = async (req, res, next) => {
         ])
         res.json({status:true,postData:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -396,7 +390,7 @@ const getSinglePost = async (req, res, next) => {
         ])
         res.json({status:true,postData:postData,related:related})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -418,7 +412,7 @@ const saveJobs = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -442,7 +436,7 @@ const setRejectedProposal = async (req, res, next) => {
         obj.userData = userData
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -471,7 +465,7 @@ const setAcceptedProposal = async (req, res, next) => {
         obj.userData = userData
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -487,7 +481,6 @@ const sendProposal = async (req, res, next) => {
             "Intermediate":["Enter Level","Intermediate"],
             "Expert":["Entry Level","Intermediate","Expert"]
         }
-        console.log(userData.profile.experience, postData.experience);
         if(!(levels[userData.profile.experience].includes(postData.experience))){
             obj.status = false
             obj.message = "You need level: "+postData.experience+""
@@ -523,7 +516,7 @@ const sendProposal = async (req, res, next) => {
         obj.response = info?.proposals
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -533,7 +526,7 @@ const getMyPost = async (req, res, next) => {
         const allPosts = await postSchema.find({user_id:user_id})
         res.json({posts:allPosts})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -564,7 +557,7 @@ const getMyProposals = async (req, res, next) => {
         ])
         res.json({status:true,postData:getPosts})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -574,7 +567,7 @@ const changePostStatus = async (req, res, next) => {
         const postData = await postSchema.find({user_id:req.params.user_id})
         res.json({status:true,postData:postData})
     }catch(err) {
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -586,7 +579,7 @@ const deletePost = async (req, res, next) => {
         const allPosts = await postSchema.find({user_id:user_id})
         res.json({status:true,postData:allPosts})
     }catch(err) {
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -625,7 +618,7 @@ const completedPost = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err) {
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -668,7 +661,7 @@ const bestMatch = async (req, res, next) => {
         ])
         res.json({status:true,postData:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -708,7 +701,7 @@ const removeSaved = async (req, res, next) => {
         ])
         res.json({status:true,postData:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -718,7 +711,7 @@ const getClientPost = async (req, res, next) => {
         const userData = await userSchema.find({_id:{$in:postData.proposals}})
         res.json({status:true,postData:postData,userData:userData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 

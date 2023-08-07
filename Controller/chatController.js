@@ -34,7 +34,7 @@ const chat = async (req, res, next) => {
             res.json(obj)
        }  
     }catch(err){    
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -44,7 +44,7 @@ const getChatList = async (req, res, next) => {
         const fullChat = await chatSchema.find({users:{$in:[user_id]}}).populate("users","-profile.password").populate("lastMessage").sort({updatedAt:-1})
         res.json({status:true,list:fullChat})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -63,7 +63,7 @@ const sendMessage = async (req, res, next) => {
         await chatSchema.updateOne({_id:new mongoose.Types.ObjectId(chat_id)},{$set:{lastMessage:content}})
         res.json({message})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -74,7 +74,7 @@ const getAllMessages = async (req, res, next) => {
         .populate("chat_id")
         res.json({messages})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -84,10 +84,10 @@ const unreadMessage = async (req, res, next) => {
         const findChat = await chatSchema.findOne({_id:new mongoose.Types.ObjectId(chat)})
         let setValue = setZero ? 0 : ((!findChat?.[receiver]) || isNaN(findChat?.[receiver])) ? 0 + 1 : findChat?.[receiver] + 1
         const setNow = setZero ? false : true 
-        console.log(await chatSchema.updateOne({_id:new mongoose.Types.ObjectId(chat)},{$set:{[receiver]:setValue}},{timestamps:setNow}))
+        await chatSchema.updateOne({_id:new mongoose.Types.ObjectId(chat)},{$set:{[receiver]:setValue}},{timestamps:setNow})
         res.json({status:true,unread:setValue})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 

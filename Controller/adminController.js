@@ -37,7 +37,7 @@ const Login = async (req, res, next) => {
                 obj.status = true
                 obj.message = "Redirecting..."
                 const maxAge = 60 * 60 * 24 * 3 // 3 days
-                const token = jwt.sign({ sub : exist._id } , process.env.jwt_key , {expiresIn:maxAge*1000})
+                const token = jwt.sign({ sub : exist._id } , process.env.jwt_key_admin, {expiresIn:maxAge*1000})
                 obj.loggedIn = true
                 obj.token = token
                 obj.getAdmin = exist
@@ -45,7 +45,7 @@ const Login = async (req, res, next) => {
             }
         res.json(obj)
     }catch(err){
-        console.log(err);
+        res.json({error:err.message})
     }
 }
 
@@ -55,7 +55,7 @@ const auth = async (req, res, next) => {
         const obj = {}
         const response = adminStorage ? JSON.parse(adminStorage) : null
         if(response){
-            const auth = jwt.verify(response.token,process.env.jwt_key)
+            const auth = jwt.verify(response.token,process.env.jwt_key_admin)
             const now = Math.floor(new Date().getTime() / 1000)
             if(auth.exp <= now){
                 obj.status = false
@@ -65,7 +65,7 @@ const auth = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err);
+        res.json({error:err.message})
     }
 }
 
@@ -97,7 +97,7 @@ const getAllUsers = async (req, res, next) => {
         ])
     res.json({status:true,response:userData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -131,14 +131,13 @@ const updateBanStatus = async (req, res, next) => {
         ])
         res.json({status:true,response:userData}) 
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
 const updateTickStatus = async (req, res, next) => {
     try{
         const body = req.body
-        console.log(body);
         await userSchema.updateOne({_id:new mongoose.Types.ObjectId(body._id)},{$set:{"profile.is_verified":!body.verified}})
         const userData = await userSchema.aggregate([
             {
@@ -166,7 +165,7 @@ const updateTickStatus = async (req, res, next) => {
         ])
         res.json({status:true,response:userData}) 
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -230,7 +229,7 @@ const fetchSearchData = async (req, res, next) =>{
         ])
         res.json({status:true,response:userData}) 
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -256,7 +255,7 @@ const getAllPost = async (req, res, next) =>{
         ])
         res.json({status:true,response:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -306,7 +305,7 @@ const fetchSearchPostData = async (req, res, next) => {
         ])
         res.json({status:true,response:postData})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -315,7 +314,7 @@ const getAdminData = async (req, res, next) => {
         const response = await adminSchema.findOne({_id:req.params.user_id})
         res.json({status:true,response:response.payouts})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -349,7 +348,7 @@ const payoutManageAdmin = async (req, res, next) => {
             res.json({status:false,response:data.payouts})
         }
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -389,7 +388,7 @@ const getDashboard = async (req, res, next) => {
         obj.profitData = sumByMonth ? Object.entries(sumByMonth).map(([month,amount]) => ({month,amount})) : [0]
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -404,7 +403,7 @@ const sendNotification = async (req, res, next) => {
             }
         })
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 

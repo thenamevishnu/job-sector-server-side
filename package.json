@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node ./index.js",
+    "start": "node-dev ./index.js",
     "build": "echo \"No build steps required for this project\""
   },
   "dependencies": {
@@ -13,10 +13,11 @@
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.3.0",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-cache": "^5.1.2",
+    "node-request-log": "^1.1.5",
     "nodemailer": "^6.9.3",
-    "peerjs": "^1.4.7",
     "sha256": "^0.2.0",
     "socket.io": "^4.7.1"
   },

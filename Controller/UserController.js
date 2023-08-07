@@ -13,7 +13,6 @@ const signup = async (req, res, next) => {
     try{
         const obj = {}
         let {userData} = req.body
-        console.log(userData);
         const result = await userSchema.findOne({"profile.email":userData.email})
         if(result){
             obj.status = false
@@ -38,7 +37,6 @@ const signup = async (req, res, next) => {
                         }
                     }else{
                         const StoredOtp = myCache.get("otp")
-                        console.log(StoredOtp, userData.otp);
                         if(userData.otp.length != StoredOtp?.toString()?.length || parseInt(userData.otp) != StoredOtp){
                             obj.status = "invalid"
                             obj.message = "Invalid otp!"
@@ -65,7 +63,7 @@ const signup = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err);
+        res.json({error:err.message})
     }
 }
 
@@ -91,7 +89,7 @@ const deleteAccount = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -131,7 +129,7 @@ const Login = async (req, res, next) => {
                         obj.status = true
                         obj.message = "Redirecting..."
                         const maxAge = 60 * 60 * 24 * 3 // 3 days
-                        const token = jwt.sign({ sub : exist._id } , process.env.jwt_key_admin , {expiresIn:maxAge*1000})
+                        const token = jwt.sign({ sub : exist._id } , process.env.jwt_key , {expiresIn:maxAge*1000})
                         obj.loggedIn = true
                         obj.token = token
                         obj.getUser = exist
@@ -141,7 +139,7 @@ const Login = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err);
+        res.json({error:err.message})
     }
 }
 
@@ -151,7 +149,7 @@ const auth = async (req, res, next) => {
         const obj = {}
         const response = userStorage ? JSON.parse(userStorage) : null
         if(response){
-            const auth = jwt.verify(response.token,process.env.jwt_key_admin)
+            const auth = jwt.verify(response.token,process.env.jwt_key)
             const now = Math.floor(new Date().getTime() / 1000)
             if(auth.exp <= now){
                 obj.status = false
@@ -161,6 +159,7 @@ const auth = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
+        const obj = {}
         obj.status = false
         res.json(obj)
     }
@@ -171,7 +170,7 @@ const getUserData = async (req, res, next) => {
         const response = await userSchema.findOne({_id:new mongoose.Types.ObjectId(req.body.id)})
         res.json(response)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -201,7 +200,7 @@ const getUserDataByEmail = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -211,10 +210,8 @@ const resetPassword = async (req, res, next) => {
         const email = req.params.email
         const obj = {}
         const checkPass = await userSchema.findOne({"profile.email":email})
-        console.log(checkPass);
         if(checkPass){
             const pass = await bcrypt.compare(password.newPassword, checkPass.profile.password)
-            console.log(pass);
             if(pass){
                 obj.status = false
                 obj.message = "Password is same as your old password!"
@@ -227,7 +224,7 @@ const resetPassword = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -239,7 +236,7 @@ const updatePic = async (req, res, next) => {
         await userSchema.updateOne({_id:user_id},{$set:{"profile.image":dp}})
         res.json({status:true,dp:dp})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -251,7 +248,7 @@ const updateAudio = async (req, res, next) => {
         await userSchema.updateOne({_id:user_id},{$set:{"profile.audio":audio+".mp3"}})
         res.json({status:true,audio:audio+".mp3"})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -263,7 +260,7 @@ const updatePdf = async (req, res, next) => {
         await userSchema.updateOne({_id:user_id},{$set:{"profile.pdf":pdf+".pdf"}})
         res.json({status:true,pdf:pdf+".pdf"})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -289,7 +286,7 @@ const getAllUsersSkills = async (req, res, next) => {
         const skills = userData?.length > 0 ? userData[0]?.uniqueArray : null
         res.json({status:true,skills:skills})
     }catch(err){    
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -315,7 +312,7 @@ const addConnection = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -359,7 +356,6 @@ const updateProfile = async (req, res, next) => {
             }else{
                 await userSchema.updateOne({_id:body.id},{$push:{"profile.skills":body.skill.skills}})
                 const skills = await userSchema.findOne({_id:body.id})
-                console.log(skills);
                 res.json({status:true,skills:skills.profile.skills})
             }  
         }
@@ -430,11 +426,10 @@ const updateProfile = async (req, res, next) => {
             res.json({status:true,certificates:certificates.profile.certificates})
         }
         if(body?.checkStatus){
-            console.log(body);
             await userSchema.updateOne({_id:body.id},{$set:{"profile.available":body.value}})
         }
     }catch(err){
-        console.log(err);
+        res.json({error:err.message})
     }
 }   
 
@@ -444,7 +439,7 @@ const addPaymentMethod = async (req, res, next) => {
         await userSchema.updateOne({_id:new mongoose.Types.ObjectId(obj.user_id)},{$set:{[`withdrawal_methods.${obj.method}`]:{to:obj.to}}})
         res.json({status:true})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -455,7 +450,7 @@ const onPaymentCompleted = async (req, res, next) => {
         const transactions = await userSchema.findOne({_id:user_id})
         res.json({status:true,transactions:transactions.transactions})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -464,7 +459,7 @@ const postNotification = async (req, res, next) => {
         const {id, obj} = req.body
         await userSchema.updateOne({_id:new mongoose.Types.ObjectId(id)},{$set:{notifications:obj}})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -543,7 +538,7 @@ const getUserReports = async (req, res, next) => {
         userReport[0].project_cost = sumByMonth ? Object.entries(sumByMonth).map(([month,cost]) => ({month,cost})) : [0]
         res.json({status:true,reports:userReport})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -572,7 +567,6 @@ const getClientReport = async (req, res, next) => {
         const obj = {}
         obj.total_post = posts ? posts.length : 0
         const enabled = posts.filter(obj => obj.status === true)
-        console.log(enabled);
         obj.enabled = enabled ? enabled.length : 0
         const disabled = posts.filter(obj => obj.status === false)
         obj.disabled = disabled ? disabled.length : 0
@@ -594,18 +588,17 @@ const getClientReport = async (req, res, next) => {
         obj.project_cost = user ? user[0]?.project_cost : [0]
         res.json({status:true,reports:obj})    
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
 const changeTwoStep = async (req, res, next) => {
     try{
         const {id, status} = req.body
-        console.log(req.body);
         await userSchema.updateOne({_id:new mongoose.Types.ObjectId(id)},{$set:{twoStep:status}})
         res.json({status:true})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -626,7 +619,7 @@ const withdraw = async (req, res, next) => {
         await adminSchema.updateMany({},{$push:{payouts:obj}})
         res.json({status:true,cooldown:timeNow+86400})
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
@@ -653,18 +646,17 @@ const changePassword = async (req, res, next) => {
         }
         res.json(obj)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 
 const contact = async (req, res, next) => {
     try{
         const {email, id, name, subject, message} = req.body.userData
-        console.log(req.body);
         const text = `Name: ${name}<br>UserID: ${id}<br>Email: ${email}<br><br>message: ${message}`
         await sendBroadcast(process.env.email, subject, text)
     }catch(err){
-        console.log(err)
+        res.json({error:err.message})
     }
 }
 

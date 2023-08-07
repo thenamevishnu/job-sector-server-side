@@ -1,18 +1,19 @@
 import express from "express"
 import adminController from "../Controller/adminController.js"
+import { adminAuth } from "../Middleware/Auth.js"
 const router = express.Router()
 
 router.post("/login",adminController.Login)
 router.post("/auth",adminController.auth)
-router.get("/getAllUsers",adminController.getAllUsers)
-router.post("/updateBanStatus",adminController.updateBanStatus)
-router.post("/updateTickStatus",adminController.updateTickStatus)
-router.get("/fetchSearchData/:key",adminController.fetchSearchData)
-router.get("/fetchSearchPostData/:key",adminController.fetchSearchPostData)
-router.get("/getAllPost",adminController.getAllPost)
-router.get("/getAdminData/:user_id",adminController.getAdminData)
-router.post("/payoutManageAdmin",adminController.payoutManageAdmin)
-router.get("/getDashboard/:id",adminController.getDashboard)
-router.post("/sendNotification",adminController.sendNotification)
+router.get("/getAllUsers",adminAuth,adminController.getAllUsers)
+router.post("/updateBanStatus",adminAuth,adminController.updateBanStatus)
+router.post("/updateTickStatus",adminAuth,adminController.updateTickStatus)
+router.get("/fetchSearchData/:key",adminAuth,adminController.fetchSearchData)
+router.get("/fetchSearchPostData/:key",adminAuth,adminController.fetchSearchPostData)
+router.get("/getAllPost",adminAuth,adminController.getAllPost)
+router.get("/getAdminData/:user_id",adminAuth,adminController.getAdminData)
+router.post("/payoutManageAdmin",adminAuth,adminController.payoutManageAdmin)
+router.get("/getDashboard/:id",adminAuth,adminController.getDashboard)
+router.post("/sendNotification",adminAuth,adminController.sendNotification)
 
 export default router

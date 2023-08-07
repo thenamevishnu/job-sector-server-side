@@ -8,10 +8,12 @@ import chatRouter from "./Router/chat.js"
 import dotenv from "dotenv"
 import session from "express-session"
 import { Server } from "socket.io"
+import logger from "node-request-log"
 
 dotenv.config()
 
 const app=express()
+app.use(logger)
 
 const server = app.listen(3001,()=>{
     console.log("connected 3001");
@@ -59,9 +61,6 @@ io.on("connection",(socket)=>{
 
     socket.on("call-end",(room_id)=>socket.to(room_id).emit("call-end",room_id))
 
-    // socket.on("calling",(room_id) => socket.to(room_id).emit("calling",room_id))
-
-    // socket.on("pickup",(room_id)=>socket.to(room_id).emit("pickup",room_id))
 })
 
 app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))
