@@ -119,7 +119,17 @@ const user = new mongoose.Schema({
             type:Boolean,
             default:1
         },
-        rating:{
+        rating:[
+            {
+                user: {
+                    type: mongoose.Types.ObjectId
+                },
+                rate:{
+                    type:Number
+                }
+            }
+        ],
+        avgRating:{
             type:Number,
             default:0
         }

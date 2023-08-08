@@ -82,7 +82,7 @@ const getPostData = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -194,7 +194,7 @@ const searchResult = async (req, res, next) => {
             if(sort == "proposalsHigh"){
                 sorting = {
                     $sort:{
-                        proposalSize: 1
+                        proposalSize: -1
                     }
                 }
             }
@@ -230,7 +230,7 @@ const searchResult = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -264,7 +264,7 @@ const getLatest = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -305,7 +305,7 @@ const getSaved = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -346,7 +346,7 @@ const getSinglePost = async (req, res, next) => {
                             _id:1,
                             "profile.full_name":1,
                             "profile.title":1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -377,7 +377,7 @@ const getSinglePost = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -644,7 +644,7 @@ const bestMatch = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,
@@ -684,7 +684,7 @@ const removeSaved = async (req, res, next) => {
                     pipeline:[{
                         $project:{
                             _id:1,
-                            "profile.rating":1,
+                            "profile.avgRating":1,
                             spent:1,
                             "profile.country":1,
                             "profile.image":1,

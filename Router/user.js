@@ -64,6 +64,7 @@ router.post("/changeTwoStep",UserController.changeTwoStep)
 
 router.post("/withdraw",headerToken,UserController.withdraw)
 router.post("/changePassword",headerToken,UserController.changePassword)
+router.post("/rateUser",headerToken,UserController.rateUser)
 
 router.post("/contact",headerToken,UserController.contact)
 

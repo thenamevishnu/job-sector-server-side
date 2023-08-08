@@ -8,12 +8,12 @@ import chatRouter from "./Router/chat.js"
 import dotenv from "dotenv"
 import session from "express-session"
 import { Server } from "socket.io"
-import morgan from "morgan"
+// import morgan from "morgan"
 
 dotenv.config()
 
 const app=express()
-app.use(morgan("dev"))
+// app.use(morgan("dev"))
 
 const server = app.listen(3001,()=>{
     console.log("connected 3001");

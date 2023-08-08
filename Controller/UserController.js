@@ -660,4 +660,21 @@ const contact = async (req, res, next) => {
     }
 }
 
-export default {onPaymentCompleted, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+const rateUser = async (req, res, next) => {
+    try{
+        const {user, user_id, rate} = req.body
+        const findUser = await userSchema.findOne({_id:new mongoose.Types.ObjectId(user),"profile.rating":{$elemMatch:{user:new mongoose.Types.ObjectId(user_id)}}})
+        if(findUser){
+            await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user)},{$pull:{"profile.rating":{user:new mongoose.Types.ObjectId(user_id)}}}) 
+        }
+        const userData = await userSchema.findOne({_id:new mongoose.Types.ObjectId(user)})
+        const totalRate = userData?.profile?.rating?.reduce((total, item) => total + item.rate , 0)
+        const avg = ((totalRate + rate) / ( userData?.profile?.rating?.length + 1 )).toFixed(1)
+        await userSchema.updateOne({_id:new mongoose.Types.ObjectId(user)},{$push:{"profile.rating":{user:new mongoose.Types.ObjectId(user_id),rate:rate}}, $set:{"profile.avgRating":avg}}) 
+        res.json({status:true})
+    }catch(err){
+        res.json({error:err.message})
+    }
+}
+
+export default {onPaymentCompleted, rateUser, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
