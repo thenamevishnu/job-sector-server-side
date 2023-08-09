@@ -63,7 +63,7 @@ io.on("connection",(socket)=>{
 
 })
 
-app.use(session({secret:"thiskey12309737",resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))
+app.use(session({secret:process.env.sessionKey,resave: false,saveUninitialized: true, cookie:{maxAge:1*60*5*1000}}))
 app.use(cookieParser())
 app.use(express.json());
 app.use(cors({
