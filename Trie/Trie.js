@@ -1,50 +1,52 @@
-class Node{
-    constructor(){
-        this.child = {}
-        this.isEnd = false
+class Node {
+    constructor() {
+        this.child = {};
+        this.isEnd = false;
     }
 }
 
-class MainClass{
-    constructor(){
-        this.root = new Node()
+class MainClass {
+    constructor() {
+        this.root = new Node();
     }
 
-    UploadArray(array){
-        for(let elements of array){
-            let currentNode = this.root
-            for(let i=0;i<elements.length;i++){
-                const letter = elements[i]
-                if(!(letter in currentNode.child)){
-                    currentNode.child[letter]=new Node()
+    UploadArray(array) {
+        for (let elements of array) {
+            let currentNode = this.root;
+            for (let i = 0; i < elements.length; i++) {
+                const letter = elements[i];
+                const lowerLetter = letter.toLowerCase();
+                if (!(lowerLetter in currentNode.child)) {
+                    currentNode.child[lowerLetter] = new Node();
                 }
-                currentNode=currentNode.child[letter]
+                currentNode = currentNode.child[lowerLetter];
             }
-            currentNode.isEnd=true
+            currentNode.isEnd = true;
         }
     }
 
-    __traverse(currentNode,prefix,words){
-        if(currentNode.isEnd){
-            words.push(prefix)
+    __traverse(currentNode, prefix, words) {
+        if (currentNode.isEnd) {
+            words.push(prefix);
         }
-        for(let child in currentNode.child){
-            this.__traverse(currentNode.child[child],prefix + child,words)
+        for (let child in currentNode.child) {
+            this.__traverse(currentNode.child[child], prefix + child, words);
         }
-        return words
+        return words;
     }
 
-    searchResponse(prefix){
-        let currentNode=this.root
-        for(let i=0;i<prefix.length;i++){
-            const letter = prefix[i]
-            if(!(letter.toUpperCase() in currentNode.child) && !(letter.toLowerCase() in currentNode.child)){
-                return []
+    searchResponse(prefix) {
+        let currentNode = this.root;
+        for (let i = 0; i < prefix.length; i++) {
+            const letter = prefix[i];
+            const lowerLetter = letter.toLowerCase();
+            if (!(lowerLetter in currentNode.child)) {
+                return [];
             }
-            currentNode=currentNode.child[letter.toLowerCase()] ? currentNode.child[letter.toLowerCase()] : currentNode.child[letter.toUpperCase()]
+            currentNode = currentNode.child[lowerLetter];
         }
-        return this.__traverse(currentNode,prefix,[])
+        return this.__traverse(currentNode, prefix, []);
     }
 }
 
-export const prefix = new MainClass()
+export const prefix = new MainClass();

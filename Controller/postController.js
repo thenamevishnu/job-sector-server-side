@@ -46,7 +46,26 @@ const searchSuggestion = async (req, res, next) => {
                 }
             }
         ])
-        const newArray = getAllData?.length > 0 ? [...getAllData[0]?.title,...getAllData[0]?.skillsNeed] : []
+        const getAllUserData = await userSchema.aggregate([
+            {
+                $unwind:"$profile.skills"
+            },
+            {
+                $group:{
+                    _id:null,
+                    skillsNeed:{
+                        $addToSet:"$profile.skills"
+                    }
+                }
+            },
+            {
+                $project: {
+                  _id: 0,
+                  skillsNeed: 1
+                }
+            }
+        ])
+        const newArray = getAllData?.length > 0 ? [...getAllData[0]?.title,...getAllData[0]?.skillsNeed,...getAllUserData[0]?.skillsNeed] : []
         prefix.UploadArray(newArray)
         const response = prefix.searchResponse(prefixWord)
         res.json({status:true,response:response})
