@@ -61,7 +61,7 @@ export const resetLink = async (email) => {
             from: process.env.email,
             to: email,
             subject: "Reset Password",
-            html: `<b>This link is valid for 5 minutes : <a href="http://localhost:3000/reset/${key}">Reset</a></b>`
+            html: `<b>This link is valid for 5 minutes : <a href=${process.env.origin}/reset/${key}">Reset</a></b>`
         };
 
         
