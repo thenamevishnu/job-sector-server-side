@@ -240,6 +240,18 @@ const updatePic = async (req, res, next) => {
     }
 }
 
+const updateClientPic = async (req, res, next) => {
+    try{
+        const {user_id} = req.body
+        const imgUrl=req.file.filename
+        const dp = await uploadCloud(imgUrl,1)
+        await userSchema.updateOne({_id:user_id},{$set:{"profile.image":dp}})
+        res.json({status:true,dp:dp})
+    }catch(err){
+        res.json({error:err.message})
+    }
+}
+
 const updateAudio = async (req, res, next) => {
     try{
         const {user_id} = req.body
@@ -677,4 +689,4 @@ const rateUser = async (req, res, next) => {
     }
 }
 
-export default {onPaymentCompleted, rateUser, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+export default {onPaymentCompleted, rateUser, updateClientPic, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
