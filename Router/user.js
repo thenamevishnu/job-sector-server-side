@@ -6,6 +6,7 @@ import postController from "../Controller/postController.js"
 import chatController from "../Controller/chatController.js"
 import { headerToken } from "../Middleware/Auth.js"
 
+router.get("/", UserController.serverStatus)
 router.post("/signup",UserController.signup)
 router.post("/login",UserController.Login)
 router.post("/auth",UserController.auth)

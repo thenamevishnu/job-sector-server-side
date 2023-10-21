@@ -689,4 +689,8 @@ const rateUser = async (req, res, next) => {
     }
 }
 
-export default {onPaymentCompleted, rateUser, updateClientPic, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
+const serverStatus = async (req, res) => {
+    res.json({status: "OK"})
+}
+
+export default {onPaymentCompleted, serverStatus, rateUser, updateClientPic, contact, changePassword, updatePdf, withdraw, changeTwoStep, getClientReport, postNotification, getUserReports, deleteAccount, signup,Login,auth,addPaymentMethod,addConnection,getUserData,updatePic,updateAudio,updateProfile,getUserDataByEmail,resetPassword, getAllUsersSkills}
