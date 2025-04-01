@@ -20,7 +20,7 @@ const server = app.listen(3001,()=>{
 const io = new Server(server,{
     pingTimeout:60000,
     cors:{
-        origin:process.env.origin
+        origin:"*"
     }
 })
 
@@ -66,8 +66,8 @@ app.use(session({secret:process.env.sessionKey,resave: false,saveUninitialized: 
 app.use(cookieParser())
 app.use(express.json());
 app.use(cors({
-    origin: [process.env.origin],
-    methods: ["GET", "POST"],
+    origin: "*",
+    methods: "*",
     credentials: true
 }))
 
